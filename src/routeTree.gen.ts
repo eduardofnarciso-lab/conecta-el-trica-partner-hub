@@ -9,61 +9,412 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as AppIndexRouteImport } from './routes/_app.index'
+import { Route as AppRankingRouteImport } from './routes/_app.ranking'
+import { Route as AppPerfilRouteImport } from './routes/_app.perfil'
+import { Route as AppLojaRouteImport } from './routes/_app.loja'
+import { Route as AppIndicacoesRouteImport } from './routes/_app.indicacoes'
+import { Route as AppExtratoRouteImport } from './routes/_app.extrato'
+import { Route as AppCampanhasRouteImport } from './routes/_app.campanhas'
+import { Route as AppAdminRouteImport } from './routes/_app.admin'
+import { Route as AppAdminIndexRouteImport } from './routes/_app.admin.index'
+import { Route as AppCampanhasIdRouteImport } from './routes/_app.campanhas.$id'
+import { Route as AppAdminRelatoriosRouteImport } from './routes/_app.admin.relatorios'
+import { Route as AppAdminPremiosRouteImport } from './routes/_app.admin.premios'
+import { Route as AppAdminParceirosRouteImport } from './routes/_app.admin.parceiros'
+import { Route as AppAdminCampanhasRouteImport } from './routes/_app.admin.campanhas'
+import { Route as AppAdminAprovacoesRouteImport } from './routes/_app.admin.aprovacoes'
 
-const IndexRoute = IndexRouteImport.update({
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRankingRoute = AppRankingRouteImport.update({
+  id: '/ranking',
+  path: '/ranking',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPerfilRoute = AppPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLojaRoute = AppLojaRouteImport.update({
+  id: '/loja',
+  path: '/loja',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppIndicacoesRoute = AppIndicacoesRouteImport.update({
+  id: '/indicacoes',
+  path: '/indicacoes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppExtratoRoute = AppExtratoRouteImport.update({
+  id: '/extrato',
+  path: '/extrato',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCampanhasRoute = AppCampanhasRouteImport.update({
+  id: '/campanhas',
+  path: '/campanhas',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminRoute = AppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminIndexRoute = AppAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppCampanhasIdRoute = AppCampanhasIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppCampanhasRoute,
+} as any)
+const AppAdminRelatoriosRoute = AppAdminRelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminPremiosRoute = AppAdminPremiosRouteImport.update({
+  id: '/premios',
+  path: '/premios',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminParceirosRoute = AppAdminParceirosRouteImport.update({
+  id: '/parceiros',
+  path: '/parceiros',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminCampanhasRoute = AppAdminCampanhasRouteImport.update({
+  id: '/campanhas',
+  path: '/campanhas',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminAprovacoesRoute = AppAdminAprovacoesRouteImport.update({
+  id: '/aprovacoes',
+  path: '/aprovacoes',
+  getParentRoute: () => AppAdminRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AppIndexRoute
+  '/login': typeof LoginRoute
+  '/admin': typeof AppAdminRouteWithChildren
+  '/campanhas': typeof AppCampanhasRouteWithChildren
+  '/extrato': typeof AppExtratoRoute
+  '/indicacoes': typeof AppIndicacoesRoute
+  '/loja': typeof AppLojaRoute
+  '/perfil': typeof AppPerfilRoute
+  '/ranking': typeof AppRankingRoute
+  '/admin/aprovacoes': typeof AppAdminAprovacoesRoute
+  '/admin/campanhas': typeof AppAdminCampanhasRoute
+  '/admin/parceiros': typeof AppAdminParceirosRoute
+  '/admin/premios': typeof AppAdminPremiosRoute
+  '/admin/relatorios': typeof AppAdminRelatoriosRoute
+  '/campanhas/$id': typeof AppCampanhasIdRoute
+  '/admin/': typeof AppAdminIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/campanhas': typeof AppCampanhasRouteWithChildren
+  '/extrato': typeof AppExtratoRoute
+  '/indicacoes': typeof AppIndicacoesRoute
+  '/loja': typeof AppLojaRoute
+  '/perfil': typeof AppPerfilRoute
+  '/ranking': typeof AppRankingRoute
+  '/': typeof AppIndexRoute
+  '/admin/aprovacoes': typeof AppAdminAprovacoesRoute
+  '/admin/campanhas': typeof AppAdminCampanhasRoute
+  '/admin/parceiros': typeof AppAdminParceirosRoute
+  '/admin/premios': typeof AppAdminPremiosRoute
+  '/admin/relatorios': typeof AppAdminRelatoriosRoute
+  '/campanhas/$id': typeof AppCampanhasIdRoute
+  '/admin': typeof AppAdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/_app/admin': typeof AppAdminRouteWithChildren
+  '/_app/campanhas': typeof AppCampanhasRouteWithChildren
+  '/_app/extrato': typeof AppExtratoRoute
+  '/_app/indicacoes': typeof AppIndicacoesRoute
+  '/_app/loja': typeof AppLojaRoute
+  '/_app/perfil': typeof AppPerfilRoute
+  '/_app/ranking': typeof AppRankingRoute
+  '/_app/': typeof AppIndexRoute
+  '/_app/admin/aprovacoes': typeof AppAdminAprovacoesRoute
+  '/_app/admin/campanhas': typeof AppAdminCampanhasRoute
+  '/_app/admin/parceiros': typeof AppAdminParceirosRoute
+  '/_app/admin/premios': typeof AppAdminPremiosRoute
+  '/_app/admin/relatorios': typeof AppAdminRelatoriosRoute
+  '/_app/campanhas/$id': typeof AppCampanhasIdRoute
+  '/_app/admin/': typeof AppAdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/admin'
+    | '/campanhas'
+    | '/extrato'
+    | '/indicacoes'
+    | '/loja'
+    | '/perfil'
+    | '/ranking'
+    | '/admin/aprovacoes'
+    | '/admin/campanhas'
+    | '/admin/parceiros'
+    | '/admin/premios'
+    | '/admin/relatorios'
+    | '/campanhas/$id'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/login'
+    | '/campanhas'
+    | '/extrato'
+    | '/indicacoes'
+    | '/loja'
+    | '/perfil'
+    | '/ranking'
+    | '/'
+    | '/admin/aprovacoes'
+    | '/admin/campanhas'
+    | '/admin/parceiros'
+    | '/admin/premios'
+    | '/admin/relatorios'
+    | '/campanhas/$id'
+    | '/admin'
+  id:
+    | '__root__'
+    | '/_app'
+    | '/login'
+    | '/_app/admin'
+    | '/_app/campanhas'
+    | '/_app/extrato'
+    | '/_app/indicacoes'
+    | '/_app/loja'
+    | '/_app/perfil'
+    | '/_app/ranking'
+    | '/_app/'
+    | '/_app/admin/aprovacoes'
+    | '/_app/admin/campanhas'
+    | '/_app/admin/parceiros'
+    | '/_app/admin/premios'
+    | '/_app/admin/relatorios'
+    | '/_app/campanhas/$id'
+    | '/_app/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/': {
+      id: '/_app/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/ranking': {
+      id: '/_app/ranking'
+      path: '/ranking'
+      fullPath: '/ranking'
+      preLoaderRoute: typeof AppRankingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/perfil': {
+      id: '/_app/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof AppPerfilRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/loja': {
+      id: '/_app/loja'
+      path: '/loja'
+      fullPath: '/loja'
+      preLoaderRoute: typeof AppLojaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/indicacoes': {
+      id: '/_app/indicacoes'
+      path: '/indicacoes'
+      fullPath: '/indicacoes'
+      preLoaderRoute: typeof AppIndicacoesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/extrato': {
+      id: '/_app/extrato'
+      path: '/extrato'
+      fullPath: '/extrato'
+      preLoaderRoute: typeof AppExtratoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/campanhas': {
+      id: '/_app/campanhas'
+      path: '/campanhas'
+      fullPath: '/campanhas'
+      preLoaderRoute: typeof AppCampanhasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/admin': {
+      id: '/_app/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AppAdminRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/admin/': {
+      id: '/_app/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AppAdminIndexRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/campanhas/$id': {
+      id: '/_app/campanhas/$id'
+      path: '/$id'
+      fullPath: '/campanhas/$id'
+      preLoaderRoute: typeof AppCampanhasIdRouteImport
+      parentRoute: typeof AppCampanhasRoute
+    }
+    '/_app/admin/relatorios': {
+      id: '/_app/admin/relatorios'
+      path: '/relatorios'
+      fullPath: '/admin/relatorios'
+      preLoaderRoute: typeof AppAdminRelatoriosRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/premios': {
+      id: '/_app/admin/premios'
+      path: '/premios'
+      fullPath: '/admin/premios'
+      preLoaderRoute: typeof AppAdminPremiosRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/parceiros': {
+      id: '/_app/admin/parceiros'
+      path: '/parceiros'
+      fullPath: '/admin/parceiros'
+      preLoaderRoute: typeof AppAdminParceirosRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/campanhas': {
+      id: '/_app/admin/campanhas'
+      path: '/campanhas'
+      fullPath: '/admin/campanhas'
+      preLoaderRoute: typeof AppAdminCampanhasRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/aprovacoes': {
+      id: '/_app/admin/aprovacoes'
+      path: '/aprovacoes'
+      fullPath: '/admin/aprovacoes'
+      preLoaderRoute: typeof AppAdminAprovacoesRouteImport
+      parentRoute: typeof AppAdminRoute
     }
   }
 }
 
+interface AppAdminRouteChildren {
+  AppAdminAprovacoesRoute: typeof AppAdminAprovacoesRoute
+  AppAdminCampanhasRoute: typeof AppAdminCampanhasRoute
+  AppAdminParceirosRoute: typeof AppAdminParceirosRoute
+  AppAdminPremiosRoute: typeof AppAdminPremiosRoute
+  AppAdminRelatoriosRoute: typeof AppAdminRelatoriosRoute
+  AppAdminIndexRoute: typeof AppAdminIndexRoute
+}
+
+const AppAdminRouteChildren: AppAdminRouteChildren = {
+  AppAdminAprovacoesRoute: AppAdminAprovacoesRoute,
+  AppAdminCampanhasRoute: AppAdminCampanhasRoute,
+  AppAdminParceirosRoute: AppAdminParceirosRoute,
+  AppAdminPremiosRoute: AppAdminPremiosRoute,
+  AppAdminRelatoriosRoute: AppAdminRelatoriosRoute,
+  AppAdminIndexRoute: AppAdminIndexRoute,
+}
+
+const AppAdminRouteWithChildren = AppAdminRoute._addFileChildren(
+  AppAdminRouteChildren,
+)
+
+interface AppCampanhasRouteChildren {
+  AppCampanhasIdRoute: typeof AppCampanhasIdRoute
+}
+
+const AppCampanhasRouteChildren: AppCampanhasRouteChildren = {
+  AppCampanhasIdRoute: AppCampanhasIdRoute,
+}
+
+const AppCampanhasRouteWithChildren = AppCampanhasRoute._addFileChildren(
+  AppCampanhasRouteChildren,
+)
+
+interface AppRouteChildren {
+  AppAdminRoute: typeof AppAdminRouteWithChildren
+  AppCampanhasRoute: typeof AppCampanhasRouteWithChildren
+  AppExtratoRoute: typeof AppExtratoRoute
+  AppIndicacoesRoute: typeof AppIndicacoesRoute
+  AppLojaRoute: typeof AppLojaRoute
+  AppPerfilRoute: typeof AppPerfilRoute
+  AppRankingRoute: typeof AppRankingRoute
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppAdminRoute: AppAdminRouteWithChildren,
+  AppCampanhasRoute: AppCampanhasRouteWithChildren,
+  AppExtratoRoute: AppExtratoRoute,
+  AppIndicacoesRoute: AppIndicacoesRoute,
+  AppLojaRoute: AppLojaRoute,
+  AppPerfilRoute: AppPerfilRoute,
+  AppRankingRoute: AppRankingRoute,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

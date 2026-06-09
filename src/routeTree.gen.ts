@@ -21,6 +21,7 @@ import { Route as AppCampanhasRouteImport } from './routes/_app.campanhas'
 import { Route as AppAdminRouteImport } from './routes/_app.admin'
 import { Route as AppAdminIndexRouteImport } from './routes/_app.admin.index'
 import { Route as AppCampanhasIdRouteImport } from './routes/_app.campanhas.$id'
+import { Route as AppAdminRelatoriosRouteImport } from './routes/_app.admin.relatorios'
 import { Route as AppAdminPremiosRouteImport } from './routes/_app.admin.premios'
 import { Route as AppAdminParceirosRouteImport } from './routes/_app.admin.parceiros'
 import { Route as AppAdminCampanhasRouteImport } from './routes/_app.admin.campanhas'
@@ -85,6 +86,11 @@ const AppCampanhasIdRoute = AppCampanhasIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AppCampanhasRoute,
 } as any)
+const AppAdminRelatoriosRoute = AppAdminRelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
+  getParentRoute: () => AppAdminRoute,
+} as any)
 const AppAdminPremiosRoute = AppAdminPremiosRouteImport.update({
   id: '/premios',
   path: '/premios',
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/admin/campanhas': typeof AppAdminCampanhasRoute
   '/admin/parceiros': typeof AppAdminParceirosRoute
   '/admin/premios': typeof AppAdminPremiosRoute
+  '/admin/relatorios': typeof AppAdminRelatoriosRoute
   '/campanhas/$id': typeof AppCampanhasIdRoute
   '/admin/': typeof AppAdminIndexRoute
 }
@@ -136,6 +143,7 @@ export interface FileRoutesByTo {
   '/admin/campanhas': typeof AppAdminCampanhasRoute
   '/admin/parceiros': typeof AppAdminParceirosRoute
   '/admin/premios': typeof AppAdminPremiosRoute
+  '/admin/relatorios': typeof AppAdminRelatoriosRoute
   '/campanhas/$id': typeof AppCampanhasIdRoute
   '/admin': typeof AppAdminIndexRoute
 }
@@ -155,6 +163,7 @@ export interface FileRoutesById {
   '/_app/admin/campanhas': typeof AppAdminCampanhasRoute
   '/_app/admin/parceiros': typeof AppAdminParceirosRoute
   '/_app/admin/premios': typeof AppAdminPremiosRoute
+  '/_app/admin/relatorios': typeof AppAdminRelatoriosRoute
   '/_app/campanhas/$id': typeof AppCampanhasIdRoute
   '/_app/admin/': typeof AppAdminIndexRoute
 }
@@ -174,6 +183,7 @@ export interface FileRouteTypes {
     | '/admin/campanhas'
     | '/admin/parceiros'
     | '/admin/premios'
+    | '/admin/relatorios'
     | '/campanhas/$id'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
@@ -190,6 +200,7 @@ export interface FileRouteTypes {
     | '/admin/campanhas'
     | '/admin/parceiros'
     | '/admin/premios'
+    | '/admin/relatorios'
     | '/campanhas/$id'
     | '/admin'
   id:
@@ -208,6 +219,7 @@ export interface FileRouteTypes {
     | '/_app/admin/campanhas'
     | '/_app/admin/parceiros'
     | '/_app/admin/premios'
+    | '/_app/admin/relatorios'
     | '/_app/campanhas/$id'
     | '/_app/admin/'
   fileRoutesById: FileRoutesById
@@ -303,6 +315,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCampanhasIdRouteImport
       parentRoute: typeof AppCampanhasRoute
     }
+    '/_app/admin/relatorios': {
+      id: '/_app/admin/relatorios'
+      path: '/relatorios'
+      fullPath: '/admin/relatorios'
+      preLoaderRoute: typeof AppAdminRelatoriosRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
     '/_app/admin/premios': {
       id: '/_app/admin/premios'
       path: '/premios'
@@ -339,6 +358,7 @@ interface AppAdminRouteChildren {
   AppAdminCampanhasRoute: typeof AppAdminCampanhasRoute
   AppAdminParceirosRoute: typeof AppAdminParceirosRoute
   AppAdminPremiosRoute: typeof AppAdminPremiosRoute
+  AppAdminRelatoriosRoute: typeof AppAdminRelatoriosRoute
   AppAdminIndexRoute: typeof AppAdminIndexRoute
 }
 
@@ -347,6 +367,7 @@ const AppAdminRouteChildren: AppAdminRouteChildren = {
   AppAdminCampanhasRoute: AppAdminCampanhasRoute,
   AppAdminParceirosRoute: AppAdminParceirosRoute,
   AppAdminPremiosRoute: AppAdminPremiosRoute,
+  AppAdminRelatoriosRoute: AppAdminRelatoriosRoute,
   AppAdminIndexRoute: AppAdminIndexRoute,
 }
 

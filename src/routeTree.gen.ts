@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppRankingRouteImport } from './routes/_app.ranking'
 import { Route as AppLojaRouteImport } from './routes/_app.loja'
+import { Route as AppIndicacoesRouteImport } from './routes/_app.indicacoes'
 import { Route as AppExtratoRouteImport } from './routes/_app.extrato'
 import { Route as AppCampanhasRouteImport } from './routes/_app.campanhas'
 import { Route as AppCampanhasIdRouteImport } from './routes/_app.campanhas.$id'
@@ -42,6 +43,11 @@ const AppLojaRoute = AppLojaRouteImport.update({
   path: '/loja',
   getParentRoute: () => AppRoute,
 } as any)
+const AppIndicacoesRoute = AppIndicacoesRouteImport.update({
+  id: '/indicacoes',
+  path: '/indicacoes',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppExtratoRoute = AppExtratoRouteImport.update({
   id: '/extrato',
   path: '/extrato',
@@ -63,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/campanhas': typeof AppCampanhasRouteWithChildren
   '/extrato': typeof AppExtratoRoute
+  '/indicacoes': typeof AppIndicacoesRoute
   '/loja': typeof AppLojaRoute
   '/ranking': typeof AppRankingRoute
   '/campanhas/$id': typeof AppCampanhasIdRoute
@@ -71,6 +78,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/campanhas': typeof AppCampanhasRouteWithChildren
   '/extrato': typeof AppExtratoRoute
+  '/indicacoes': typeof AppIndicacoesRoute
   '/loja': typeof AppLojaRoute
   '/ranking': typeof AppRankingRoute
   '/': typeof AppIndexRoute
@@ -82,6 +90,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_app/campanhas': typeof AppCampanhasRouteWithChildren
   '/_app/extrato': typeof AppExtratoRoute
+  '/_app/indicacoes': typeof AppIndicacoesRoute
   '/_app/loja': typeof AppLojaRoute
   '/_app/ranking': typeof AppRankingRoute
   '/_app/': typeof AppIndexRoute
@@ -94,6 +103,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/campanhas'
     | '/extrato'
+    | '/indicacoes'
     | '/loja'
     | '/ranking'
     | '/campanhas/$id'
@@ -102,6 +112,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/campanhas'
     | '/extrato'
+    | '/indicacoes'
     | '/loja'
     | '/ranking'
     | '/'
@@ -112,6 +123,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_app/campanhas'
     | '/_app/extrato'
+    | '/_app/indicacoes'
     | '/_app/loja'
     | '/_app/ranking'
     | '/_app/'
@@ -160,6 +172,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLojaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/indicacoes': {
+      id: '/_app/indicacoes'
+      path: '/indicacoes'
+      fullPath: '/indicacoes'
+      preLoaderRoute: typeof AppIndicacoesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/extrato': {
       id: '/_app/extrato'
       path: '/extrato'
@@ -199,6 +218,7 @@ const AppCampanhasRouteWithChildren = AppCampanhasRoute._addFileChildren(
 interface AppRouteChildren {
   AppCampanhasRoute: typeof AppCampanhasRouteWithChildren
   AppExtratoRoute: typeof AppExtratoRoute
+  AppIndicacoesRoute: typeof AppIndicacoesRoute
   AppLojaRoute: typeof AppLojaRoute
   AppRankingRoute: typeof AppRankingRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -207,6 +227,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppCampanhasRoute: AppCampanhasRouteWithChildren,
   AppExtratoRoute: AppExtratoRoute,
+  AppIndicacoesRoute: AppIndicacoesRoute,
   AppLojaRoute: AppLojaRoute,
   AppRankingRoute: AppRankingRoute,
   AppIndexRoute: AppIndexRoute,

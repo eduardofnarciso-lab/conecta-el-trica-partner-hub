@@ -19,6 +19,7 @@ import { Route as AppIndicacoesRouteImport } from './routes/_app.indicacoes'
 import { Route as AppExtratoRouteImport } from './routes/_app.extrato'
 import { Route as AppCampanhasRouteImport } from './routes/_app.campanhas'
 import { Route as AppAdminRouteImport } from './routes/_app.admin'
+import { Route as AppAdminIndexRouteImport } from './routes/_app.admin.index'
 import { Route as AppCampanhasIdRouteImport } from './routes/_app.campanhas.$id'
 
 const LoginRoute = LoginRouteImport.update({
@@ -70,6 +71,11 @@ const AppAdminRoute = AppAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdminIndexRoute = AppAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppAdminRoute,
+} as any)
 const AppCampanhasIdRoute = AppCampanhasIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -79,7 +85,7 @@ const AppCampanhasIdRoute = AppCampanhasIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
-  '/admin': typeof AppAdminRoute
+  '/admin': typeof AppAdminRouteWithChildren
   '/campanhas': typeof AppCampanhasRouteWithChildren
   '/extrato': typeof AppExtratoRoute
   '/indicacoes': typeof AppIndicacoesRoute
@@ -87,10 +93,10 @@ export interface FileRoutesByFullPath {
   '/perfil': typeof AppPerfilRoute
   '/ranking': typeof AppRankingRoute
   '/campanhas/$id': typeof AppCampanhasIdRoute
+  '/admin/': typeof AppAdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
-  '/admin': typeof AppAdminRoute
   '/campanhas': typeof AppCampanhasRouteWithChildren
   '/extrato': typeof AppExtratoRoute
   '/indicacoes': typeof AppIndicacoesRoute
@@ -99,12 +105,13 @@ export interface FileRoutesByTo {
   '/ranking': typeof AppRankingRoute
   '/': typeof AppIndexRoute
   '/campanhas/$id': typeof AppCampanhasIdRoute
+  '/admin': typeof AppAdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
-  '/_app/admin': typeof AppAdminRoute
+  '/_app/admin': typeof AppAdminRouteWithChildren
   '/_app/campanhas': typeof AppCampanhasRouteWithChildren
   '/_app/extrato': typeof AppExtratoRoute
   '/_app/indicacoes': typeof AppIndicacoesRoute
@@ -113,6 +120,7 @@ export interface FileRoutesById {
   '/_app/ranking': typeof AppRankingRoute
   '/_app/': typeof AppIndexRoute
   '/_app/campanhas/$id': typeof AppCampanhasIdRoute
+  '/_app/admin/': typeof AppAdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -127,10 +135,10 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/ranking'
     | '/campanhas/$id'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
-    | '/admin'
     | '/campanhas'
     | '/extrato'
     | '/indicacoes'
@@ -139,6 +147,7 @@ export interface FileRouteTypes {
     | '/ranking'
     | '/'
     | '/campanhas/$id'
+    | '/admin'
   id:
     | '__root__'
     | '/_app'
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/_app/ranking'
     | '/_app/'
     | '/_app/campanhas/$id'
+    | '/_app/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -231,6 +241,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/admin/': {
+      id: '/_app/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AppAdminIndexRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
     '/_app/campanhas/$id': {
       id: '/_app/campanhas/$id'
       path: '/$id'
@@ -240,6 +257,18 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AppAdminRouteChildren {
+  AppAdminIndexRoute: typeof AppAdminIndexRoute
+}
+
+const AppAdminRouteChildren: AppAdminRouteChildren = {
+  AppAdminIndexRoute: AppAdminIndexRoute,
+}
+
+const AppAdminRouteWithChildren = AppAdminRoute._addFileChildren(
+  AppAdminRouteChildren,
+)
 
 interface AppCampanhasRouteChildren {
   AppCampanhasIdRoute: typeof AppCampanhasIdRoute
@@ -254,7 +283,7 @@ const AppCampanhasRouteWithChildren = AppCampanhasRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
-  AppAdminRoute: typeof AppAdminRoute
+  AppAdminRoute: typeof AppAdminRouteWithChildren
   AppCampanhasRoute: typeof AppCampanhasRouteWithChildren
   AppExtratoRoute: typeof AppExtratoRoute
   AppIndicacoesRoute: typeof AppIndicacoesRoute
@@ -265,7 +294,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppAdminRoute: AppAdminRoute,
+  AppAdminRoute: AppAdminRouteWithChildren,
   AppCampanhasRoute: AppCampanhasRouteWithChildren,
   AppExtratoRoute: AppExtratoRoute,
   AppIndicacoesRoute: AppIndicacoesRoute,

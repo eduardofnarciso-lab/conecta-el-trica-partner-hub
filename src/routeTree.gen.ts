@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppCampanhasRouteImport } from './routes/_app.campanhas'
+import { Route as AppCampanhasIdRouteImport } from './routes/_app.campanhas.$id'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -33,30 +34,44 @@ const AppCampanhasRoute = AppCampanhasRouteImport.update({
   path: '/campanhas',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCampanhasIdRoute = AppCampanhasIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppCampanhasRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
-  '/campanhas': typeof AppCampanhasRoute
+  '/campanhas': typeof AppCampanhasRouteWithChildren
+  '/campanhas/$id': typeof AppCampanhasIdRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
-  '/campanhas': typeof AppCampanhasRoute
+  '/campanhas': typeof AppCampanhasRouteWithChildren
   '/': typeof AppIndexRoute
+  '/campanhas/$id': typeof AppCampanhasIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
-  '/_app/campanhas': typeof AppCampanhasRoute
+  '/_app/campanhas': typeof AppCampanhasRouteWithChildren
   '/_app/': typeof AppIndexRoute
+  '/_app/campanhas/$id': typeof AppCampanhasIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/campanhas'
+  fullPaths: '/' | '/login' | '/campanhas' | '/campanhas/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/campanhas' | '/'
-  id: '__root__' | '/_app' | '/login' | '/_app/campanhas' | '/_app/'
+  to: '/login' | '/campanhas' | '/' | '/campanhas/$id'
+  id:
+    | '__root__'
+    | '/_app'
+    | '/login'
+    | '/_app/campanhas'
+    | '/_app/'
+    | '/_app/campanhas/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -94,16 +109,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCampanhasRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/campanhas/$id': {
+      id: '/_app/campanhas/$id'
+      path: '/$id'
+      fullPath: '/campanhas/$id'
+      preLoaderRoute: typeof AppCampanhasIdRouteImport
+      parentRoute: typeof AppCampanhasRoute
+    }
   }
 }
 
+interface AppCampanhasRouteChildren {
+  AppCampanhasIdRoute: typeof AppCampanhasIdRoute
+}
+
+const AppCampanhasRouteChildren: AppCampanhasRouteChildren = {
+  AppCampanhasIdRoute: AppCampanhasIdRoute,
+}
+
+const AppCampanhasRouteWithChildren = AppCampanhasRoute._addFileChildren(
+  AppCampanhasRouteChildren,
+)
+
 interface AppRouteChildren {
-  AppCampanhasRoute: typeof AppCampanhasRoute
+  AppCampanhasRoute: typeof AppCampanhasRouteWithChildren
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppCampanhasRoute: AppCampanhasRoute,
+  AppCampanhasRoute: AppCampanhasRouteWithChildren,
   AppIndexRoute: AppIndexRoute,
 }
 

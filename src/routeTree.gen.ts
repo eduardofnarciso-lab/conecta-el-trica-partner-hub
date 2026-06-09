@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppRankingRouteImport } from './routes/_app.ranking'
+import { Route as AppPerfilRouteImport } from './routes/_app.perfil'
 import { Route as AppLojaRouteImport } from './routes/_app.loja'
 import { Route as AppIndicacoesRouteImport } from './routes/_app.indicacoes'
 import { Route as AppExtratoRouteImport } from './routes/_app.extrato'
@@ -36,6 +37,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
 const AppRankingRoute = AppRankingRouteImport.update({
   id: '/ranking',
   path: '/ranking',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPerfilRoute = AppPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
   getParentRoute: () => AppRoute,
 } as any)
 const AppLojaRoute = AppLojaRouteImport.update({
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/extrato': typeof AppExtratoRoute
   '/indicacoes': typeof AppIndicacoesRoute
   '/loja': typeof AppLojaRoute
+  '/perfil': typeof AppPerfilRoute
   '/ranking': typeof AppRankingRoute
   '/campanhas/$id': typeof AppCampanhasIdRoute
 }
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/extrato': typeof AppExtratoRoute
   '/indicacoes': typeof AppIndicacoesRoute
   '/loja': typeof AppLojaRoute
+  '/perfil': typeof AppPerfilRoute
   '/ranking': typeof AppRankingRoute
   '/': typeof AppIndexRoute
   '/campanhas/$id': typeof AppCampanhasIdRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/_app/extrato': typeof AppExtratoRoute
   '/_app/indicacoes': typeof AppIndicacoesRoute
   '/_app/loja': typeof AppLojaRoute
+  '/_app/perfil': typeof AppPerfilRoute
   '/_app/ranking': typeof AppRankingRoute
   '/_app/': typeof AppIndexRoute
   '/_app/campanhas/$id': typeof AppCampanhasIdRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/extrato'
     | '/indicacoes'
     | '/loja'
+    | '/perfil'
     | '/ranking'
     | '/campanhas/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -114,6 +124,7 @@ export interface FileRouteTypes {
     | '/extrato'
     | '/indicacoes'
     | '/loja'
+    | '/perfil'
     | '/ranking'
     | '/'
     | '/campanhas/$id'
@@ -125,6 +136,7 @@ export interface FileRouteTypes {
     | '/_app/extrato'
     | '/_app/indicacoes'
     | '/_app/loja'
+    | '/_app/perfil'
     | '/_app/ranking'
     | '/_app/'
     | '/_app/campanhas/$id'
@@ -163,6 +175,13 @@ declare module '@tanstack/react-router' {
       path: '/ranking'
       fullPath: '/ranking'
       preLoaderRoute: typeof AppRankingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/perfil': {
+      id: '/_app/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof AppPerfilRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/loja': {
@@ -220,6 +239,7 @@ interface AppRouteChildren {
   AppExtratoRoute: typeof AppExtratoRoute
   AppIndicacoesRoute: typeof AppIndicacoesRoute
   AppLojaRoute: typeof AppLojaRoute
+  AppPerfilRoute: typeof AppPerfilRoute
   AppRankingRoute: typeof AppRankingRoute
   AppIndexRoute: typeof AppIndexRoute
 }
@@ -229,6 +249,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppExtratoRoute: AppExtratoRoute,
   AppIndicacoesRoute: AppIndicacoesRoute,
   AppLojaRoute: AppLojaRoute,
+  AppPerfilRoute: AppPerfilRoute,
   AppRankingRoute: AppRankingRoute,
   AppIndexRoute: AppIndexRoute,
 }

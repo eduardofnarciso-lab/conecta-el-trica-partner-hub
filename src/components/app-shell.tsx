@@ -20,7 +20,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-const nav = [
+type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
+const nav: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/campanhas", label: "Campanhas", icon: Megaphone },
   { to: "/ranking", label: "Ranking", icon: Trophy },
@@ -29,7 +30,7 @@ const nav = [
   { to: "/indicacoes", label: "Indicações", icon: UserPlus },
   { to: "/perfil", label: "Meu Perfil", icon: User },
   { to: "/admin", label: "Administração", icon: ShieldCheck },
-] as const;
+];
 
 function Brand() {
   return (

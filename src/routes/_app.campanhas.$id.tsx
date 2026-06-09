@@ -56,7 +56,7 @@ function CampaignDetail() {
           <CardHeader><CardTitle className="text-base">Regras da campanha</CardTitle></CardHeader>
           <CardContent>
             <ul className="space-y-3">
-              {campaign.rules.map((r, i) => (
+              {campaign.rules.map((r: string, i: number) => (
                 <li key={i} className="flex gap-2 text-sm">
                   <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
                   <span>{r}</span>

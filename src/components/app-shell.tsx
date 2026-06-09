@@ -55,7 +55,7 @@ function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () =
         return (
           <Link
             key={item.to}
-            to={item.to}
+            to={item.to as any}
             onClick={onNavigate}
             className={cn(
               "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
@@ -158,7 +158,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             return (
               <Link
                 key={item.to}
-                to={item.to}
+                to={item.to as any}
                 className={cn(
                   "flex flex-col items-center gap-0.5 px-2 py-1 text-[10px]",
                   active ? "text-primary" : "text-muted-foreground",

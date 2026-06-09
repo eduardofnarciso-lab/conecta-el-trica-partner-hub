@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
+import { Route as AppRankingRouteImport } from './routes/_app.ranking'
 import { Route as AppCampanhasRouteImport } from './routes/_app.campanhas'
 import { Route as AppCampanhasIdRouteImport } from './routes/_app.campanhas.$id'
 
@@ -29,6 +30,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppRankingRoute = AppRankingRouteImport.update({
+  id: '/ranking',
+  path: '/ranking',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCampanhasRoute = AppCampanhasRouteImport.update({
   id: '/campanhas',
   path: '/campanhas',
@@ -44,11 +50,13 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
   '/campanhas': typeof AppCampanhasRouteWithChildren
+  '/ranking': typeof AppRankingRoute
   '/campanhas/$id': typeof AppCampanhasIdRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/campanhas': typeof AppCampanhasRouteWithChildren
+  '/ranking': typeof AppRankingRoute
   '/': typeof AppIndexRoute
   '/campanhas/$id': typeof AppCampanhasIdRoute
 }
@@ -57,19 +65,21 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/_app/campanhas': typeof AppCampanhasRouteWithChildren
+  '/_app/ranking': typeof AppRankingRoute
   '/_app/': typeof AppIndexRoute
   '/_app/campanhas/$id': typeof AppCampanhasIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/campanhas' | '/campanhas/$id'
+  fullPaths: '/' | '/login' | '/campanhas' | '/ranking' | '/campanhas/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/campanhas' | '/' | '/campanhas/$id'
+  to: '/login' | '/campanhas' | '/ranking' | '/' | '/campanhas/$id'
   id:
     | '__root__'
     | '/_app'
     | '/login'
     | '/_app/campanhas'
+    | '/_app/ranking'
     | '/_app/'
     | '/_app/campanhas/$id'
   fileRoutesById: FileRoutesById
@@ -100,6 +110,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/ranking': {
+      id: '/_app/ranking'
+      path: '/ranking'
+      fullPath: '/ranking'
+      preLoaderRoute: typeof AppRankingRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/campanhas': {
@@ -133,11 +150,13 @@ const AppCampanhasRouteWithChildren = AppCampanhasRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppCampanhasRoute: typeof AppCampanhasRouteWithChildren
+  AppRankingRoute: typeof AppRankingRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppCampanhasRoute: AppCampanhasRouteWithChildren,
+  AppRankingRoute: AppRankingRoute,
   AppIndexRoute: AppIndexRoute,
 }
 
@@ -150,3 +169,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

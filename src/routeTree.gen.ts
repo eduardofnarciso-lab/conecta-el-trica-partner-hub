@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppRankingRouteImport } from './routes/_app.ranking'
+import { Route as AppExtratoRouteImport } from './routes/_app.extrato'
 import { Route as AppCampanhasRouteImport } from './routes/_app.campanhas'
 import { Route as AppCampanhasIdRouteImport } from './routes/_app.campanhas.$id'
 
@@ -35,6 +36,11 @@ const AppRankingRoute = AppRankingRouteImport.update({
   path: '/ranking',
   getParentRoute: () => AppRoute,
 } as any)
+const AppExtratoRoute = AppExtratoRouteImport.update({
+  id: '/extrato',
+  path: '/extrato',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCampanhasRoute = AppCampanhasRouteImport.update({
   id: '/campanhas',
   path: '/campanhas',
@@ -50,12 +56,14 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
   '/campanhas': typeof AppCampanhasRouteWithChildren
+  '/extrato': typeof AppExtratoRoute
   '/ranking': typeof AppRankingRoute
   '/campanhas/$id': typeof AppCampanhasIdRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/campanhas': typeof AppCampanhasRouteWithChildren
+  '/extrato': typeof AppExtratoRoute
   '/ranking': typeof AppRankingRoute
   '/': typeof AppIndexRoute
   '/campanhas/$id': typeof AppCampanhasIdRoute
@@ -65,20 +73,28 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/_app/campanhas': typeof AppCampanhasRouteWithChildren
+  '/_app/extrato': typeof AppExtratoRoute
   '/_app/ranking': typeof AppRankingRoute
   '/_app/': typeof AppIndexRoute
   '/_app/campanhas/$id': typeof AppCampanhasIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/campanhas' | '/ranking' | '/campanhas/$id'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/campanhas'
+    | '/extrato'
+    | '/ranking'
+    | '/campanhas/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/campanhas' | '/ranking' | '/' | '/campanhas/$id'
+  to: '/login' | '/campanhas' | '/extrato' | '/ranking' | '/' | '/campanhas/$id'
   id:
     | '__root__'
     | '/_app'
     | '/login'
     | '/_app/campanhas'
+    | '/_app/extrato'
     | '/_app/ranking'
     | '/_app/'
     | '/_app/campanhas/$id'
@@ -119,6 +135,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRankingRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/extrato': {
+      id: '/_app/extrato'
+      path: '/extrato'
+      fullPath: '/extrato'
+      preLoaderRoute: typeof AppExtratoRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/campanhas': {
       id: '/_app/campanhas'
       path: '/campanhas'
@@ -150,12 +173,14 @@ const AppCampanhasRouteWithChildren = AppCampanhasRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppCampanhasRoute: typeof AppCampanhasRouteWithChildren
+  AppExtratoRoute: typeof AppExtratoRoute
   AppRankingRoute: typeof AppRankingRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppCampanhasRoute: AppCampanhasRouteWithChildren,
+  AppExtratoRoute: AppExtratoRoute,
   AppRankingRoute: AppRankingRoute,
   AppIndexRoute: AppIndexRoute,
 }

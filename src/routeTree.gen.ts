@@ -18,6 +18,7 @@ import { Route as AppLojaRouteImport } from './routes/_app.loja'
 import { Route as AppIndicacoesRouteImport } from './routes/_app.indicacoes'
 import { Route as AppExtratoRouteImport } from './routes/_app.extrato'
 import { Route as AppCampanhasRouteImport } from './routes/_app.campanhas'
+import { Route as AppAdminRouteImport } from './routes/_app.admin'
 import { Route as AppCampanhasIdRouteImport } from './routes/_app.campanhas.$id'
 
 const LoginRoute = LoginRouteImport.update({
@@ -64,6 +65,11 @@ const AppCampanhasRoute = AppCampanhasRouteImport.update({
   path: '/campanhas',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdminRoute = AppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCampanhasIdRoute = AppCampanhasIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -73,6 +79,7 @@ const AppCampanhasIdRoute = AppCampanhasIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
+  '/admin': typeof AppAdminRoute
   '/campanhas': typeof AppCampanhasRouteWithChildren
   '/extrato': typeof AppExtratoRoute
   '/indicacoes': typeof AppIndicacoesRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
+  '/admin': typeof AppAdminRoute
   '/campanhas': typeof AppCampanhasRouteWithChildren
   '/extrato': typeof AppExtratoRoute
   '/indicacoes': typeof AppIndicacoesRoute
@@ -96,6 +104,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/_app/admin': typeof AppAdminRoute
   '/_app/campanhas': typeof AppCampanhasRouteWithChildren
   '/_app/extrato': typeof AppExtratoRoute
   '/_app/indicacoes': typeof AppIndicacoesRoute
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/admin'
     | '/campanhas'
     | '/extrato'
     | '/indicacoes'
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
+    | '/admin'
     | '/campanhas'
     | '/extrato'
     | '/indicacoes'
@@ -132,6 +143,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_app'
     | '/login'
+    | '/_app/admin'
     | '/_app/campanhas'
     | '/_app/extrato'
     | '/_app/indicacoes'
@@ -212,6 +224,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCampanhasRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/admin': {
+      id: '/_app/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AppAdminRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/campanhas/$id': {
       id: '/_app/campanhas/$id'
       path: '/$id'
@@ -235,6 +254,7 @@ const AppCampanhasRouteWithChildren = AppCampanhasRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppAdminRoute: typeof AppAdminRoute
   AppCampanhasRoute: typeof AppCampanhasRouteWithChildren
   AppExtratoRoute: typeof AppExtratoRoute
   AppIndicacoesRoute: typeof AppIndicacoesRoute
@@ -245,6 +265,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAdminRoute: AppAdminRoute,
   AppCampanhasRoute: AppCampanhasRouteWithChildren,
   AppExtratoRoute: AppExtratoRoute,
   AppIndicacoesRoute: AppIndicacoesRoute,

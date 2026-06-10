@@ -70,7 +70,15 @@ function LoginPage() {
           </div>
         </div>
         <div className="relative text-xs text-sidebar-foreground/50">
-          © 2026 Elettro Ponto. Todos os direitos reservados.
+          © 2026{" "}
+          <a
+            href="https://spiritrelay.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-sidebar-foreground/80"
+          >
+            spiritrelay.com
+          </a>
         </div>
       </div>
 
@@ -110,11 +118,3 @@ function LoginPage() {
           <Button type="submit" disabled={loading} className="w-full h-11 text-base font-semibold">
             {loading ? "Entrando..." : "Entrar"}
           </Button>
-          <p className="text-xs text-center text-muted-foreground">
-            Acesso restrito — use as credenciais cadastradas no sistema.
-          </p>
-        </form>
-      </div>
-    </div>
-  );
-}

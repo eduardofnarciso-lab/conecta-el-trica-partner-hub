@@ -12,4 +12,7 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Força o Nitro a empacotar um servidor Node autônomo em `.output/`
+  // (preset node-server). Sem isso, fora do Lovable o build só gera `dist/`.
+  nitro: { preset: "node-server" },
 });

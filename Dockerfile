@@ -4,7 +4,7 @@
 # =====================================================================
 
 # ---- Build ----
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json bun.lock* ./
 RUN npm install
@@ -15,7 +15,7 @@ ENV SERVER_PRESET=node-server
 RUN npm run build
 
 # ---- Runtime ----
-FROM node:20-alpine AS runtime
+FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000

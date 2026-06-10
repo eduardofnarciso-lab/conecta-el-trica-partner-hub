@@ -1,30 +1,40 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Calendar, Zap, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/badges";
-import { mockCampaigns } from "@/lib/mocks";
-import { toast } from "sonner";
+import { fetchCampanha, campanhaPeriodo, campanhaPontosLabel, CAMPANHA_STATUS_LABEL } from "@/lib/campanhas";
 
 export const Route = createFileRoute("/_app/campanhas_/$id")({
-  loader: ({ params }) => {
-    const campaign = mockCampaigns.find((c) => c.id === params.id);
-    if (!campaign) throw notFound();
-    return { campaign };
-  },
   component: CampaignDetail,
-  notFoundComponent: () => (
-    <div className="p-8 text-center text-muted-foreground">Campanha não encontrada.</div>
-  ),
 });
 
 function CampaignDetail() {
-  const { campaign } = Route.useLoaderData();
-  const history = [
-    { date: "2026-06-07", action: "Pontos creditados", value: 500 },
-    { date: "2026-05-22", action: "Pontos creditados", value: 800 },
-    { date: "2026-05-10", action: "Inscrição confirmada", value: 0 },
-  ];
+  const { id } = Route.useParams();
+  const { data: campaign, isLoading } = useQuery({
+    queryKey: ["campanha", id],
+    queryFn: () => fetchCampanha(id),
+  });
+
+  if (isLoading) {
+    return <div className="p-8 text-center text-muted-foreground">Carregando campanha…</div>;
+  }
+  if (!campaign) {
+    return (
+      <div className="p-8 text-center text-muted-foreground space-y-4">
+        <p>Campanha não encontrada.</p>
+        <Button asChild variant="outline" size="sm">
+          <Link to="/campanhas"><ArrowLeft className="h-4 w-4 mr-1" /> Voltar para campanhas</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  const rules =
+    campaign.regras && campaign.regras.length > 0
+      ? campaign.regras
+      : ["Pontuação conforme compras registradas na campanha.", `Top ${campaign.premiacao_top} do ranking são premiados ao final.`];
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -37,17 +47,17 @@ function CampaignDetail() {
           style={{ backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)", backgroundSize: "20px 20px" }} />
         <div className="relative flex items-start justify-between flex-wrap gap-3">
           <div>
-            <StatusBadge status={campaign.status} />
-            <h1 className="text-2xl md:text-3xl font-bold mt-3">{campaign.name}</h1>
-            <p className="text-primary-foreground/80 mt-2 max-w-2xl">{campaign.description}</p>
+            <StatusBadge status={CAMPANHA_STATUS_LABEL[campaign.status] ?? campaign.status} />
+            <h1 className="text-2xl md:text-3xl font-bold mt-3">{campaign.nome}</h1>
+            <p className="text-primary-foreground/80 mt-2 max-w-2xl">{campaign.descricao}</p>
           </div>
           <div className="bg-energy text-energy-foreground rounded-lg px-4 py-3 text-center">
             <div className="text-xs uppercase tracking-wider opacity-70">Recompensa</div>
-            <div className="text-lg font-bold flex items-center gap-1"><Zap className="h-4 w-4" /> {campaign.points}</div>
+            <div className="text-lg font-bold flex items-center gap-1"><Zap className="h-4 w-4" /> {campanhaPontosLabel(campaign)}</div>
           </div>
         </div>
         <div className="relative flex flex-wrap gap-4 mt-6 text-sm text-primary-foreground/80">
-          <div className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {campaign.period}</div>
+          <div className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {campanhaPeriodo(campaign)}</div>
         </div>
       </div>
 
@@ -56,35 +66,21 @@ function CampaignDetail() {
           <CardHeader><CardTitle className="text-base">Regras da campanha</CardTitle></CardHeader>
           <CardContent>
             <ul className="space-y-3">
-              {campaign.rules.map((r: string, i: number) => (
+              {rules.map((r, i) => (
                 <li key={i} className="flex gap-2 text-sm">
-                  <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
-                  <span>{r}</span>
+                  <CheckCircle2 className="h-4 w-4 text-success mt-0.5 shrink-0" />
+                  {r}
                 </li>
               ))}
             </ul>
-            <Button
-              className="mt-6"
-              onClick={() => toast.success("Você está participando da campanha!")}
-              disabled={campaign.status !== "Ativa"}
-            >
-              {campaign.status === "Ativa" ? "Participar" : campaign.status}
-            </Button>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader><CardTitle className="text-base">Histórico</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            {history.map((h, i) => (
-              <div key={i} className="flex items-center justify-between text-sm border-b border-border last:border-0 pb-2 last:pb-0">
-                <div>
-                  <div className="font-medium">{h.action}</div>
-                  <div className="text-xs text-muted-foreground">{new Date(h.date).toLocaleDateString("pt-BR")}</div>
-                </div>
-                {h.value > 0 && <div className="text-success font-semibold">+{h.value}</div>}
-              </div>
-            ))}
+          <CardHeader><CardTitle className="text-base">Resumo</CardTitle></CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <div className="flex justify-between"><span className="text-muted-foreground">Período</span><span className="text-right">{campanhaPeriodo(campaign)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Premiados</span><span>Top {campaign.premiacao_top}</span></div>
+            <div className="flex justify-between items-center"><span className="text-muted-foreground">Status</span><StatusBadge status={CAMPANHA_STATUS_LABEL[campaign.status] ?? campaign.status} /></div>
           </CardContent>
         </Card>
       </div>

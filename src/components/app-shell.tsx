@@ -126,7 +126,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Main */}
-      <div className="flex-1 md:pl-64 flex flex-col min-h-screen">
+      <div className="flex-1 min-w-0 md:pl-64 flex flex-col min-h-screen">
         <header className="sticky top-0 z-30 h-16 bg-card border-b border-border flex items-center px-4 md:px-6 gap-3">
           <Button
             variant="ghost"
@@ -150,7 +150,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Avatar>
           </div>
         </header>
-        <main className="flex-1 p-4 md:p-8 pb-24 md:pb-8">{children}</main>
+        <main className="flex-1 min-w-0 w-full p-4 md:p-8 pb-24 md:pb-8 overflow-x-hidden">{children}</main>
 
         {/* Mobile bottom nav */}
         <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-card border-t border-border flex justify-around py-2">

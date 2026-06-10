@@ -6,7 +6,7 @@ import { StatusBadge } from "@/components/badges";
 import { mockCampaigns } from "@/lib/mocks";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_app/campanhas/$id")({
+export const Route = createFileRoute("/_app/campanhas_/$id")({
   loader: ({ params }) => {
     const campaign = mockCampaigns.find((c) => c.id === params.id);
     if (!campaign) throw notFound();

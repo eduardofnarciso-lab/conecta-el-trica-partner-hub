@@ -118,3 +118,11 @@ function LoginPage() {
           <Button type="submit" disabled={loading} className="w-full h-11 text-base font-semibold">
             {loading ? "Entrando..." : "Entrar"}
           </Button>
+          <p className="text-xs text-center text-muted-foreground">
+            Acesso restrito — use as credenciais cadastradas no sistema.
+          </p>
+        </form>
+      </div>
+    </div>
+  );
+}

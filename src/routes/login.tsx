@@ -79,6 +79,7 @@ function LoginPage() {
           >
             spiritrelay.com
           </a>
+          . Todos os direitos reservados.
         </div>
       </div>
 

@@ -151,6 +151,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         <main className="flex-1 min-w-0 w-full p-4 md:p-8 pb-24 md:pb-8 overflow-x-hidden">{children}</main>
+        <footer className="px-4 md:px-8 pb-24 md:pb-6 text-center text-xs text-muted-foreground">
+          © 2026{" "}
+          <a href="https://spiritrelay.com/" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">
+            spiritrelay.com
+          </a>
+          . Todos os direitos reservados.
+        </footer>
 
         {/* Mobile bottom nav */}
         <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-card border-t border-border flex justify-around py-2">

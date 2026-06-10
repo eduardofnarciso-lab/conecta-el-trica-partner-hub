@@ -8,14 +8,15 @@ import {
 import type { ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/lib/auth";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Clube Conecta Elétrica" },
-      { name: "description", content: "Programa de relacionamento, pontuação e fidelização para parceiros do setor elétrico." },
+      { title: "Elettro Ponto · Clube de Pontos" },
+      { name: "description", content: "Programa de pontuação, ranking e premiação para eletricistas parceiros da Elettro Ponto." },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
@@ -40,8 +41,10 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
-      <Toaster position="top-right" richColors />
+      <AuthProvider>
+        <Outlet />
+        <Toaster position="top-right" richColors />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

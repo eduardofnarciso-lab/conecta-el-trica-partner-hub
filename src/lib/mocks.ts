@@ -1,4 +1,4 @@
-// Mock data for Clube Conecta Elétrica
+// Mock data — Elettro Ponto · Clube de Pontos do Eletricista (Tatuí - SP)
 export type Tier = "Bronze" | "Prata" | "Ouro" | "Diamante";
 
 export const TIERS: { name: Tier; min: number; color: string }[] = [
@@ -8,17 +8,20 @@ export const TIERS: { name: Tier; min: number; color: string }[] = [
   { name: "Diamante", min: 15000, color: "diamond" },
 ];
 
+// Usuário master (admin que enxerga tudo). Por enquanto há um único usuário
+// com acesso total — o controle de permissões por usuário virá depois.
 export const currentUser = {
   id: "u-001",
   name: "Eduardo Narciso",
-  email: "eduardo@conectaeletrica.com",
-  type: "Eletricista Parceiro",
-  company: "Narciso Instalações Elétricas",
-  city: "Curitiba - PR",
-  tier: "Ouro" as Tier,
+  email: "eduardo.f.narciso@gmail.com",
+  type: "Administrador (Master)",
+  role: "master" as const,
+  company: "Elettro Ponto",
+  city: "Tatuí - SP",
+  tier: "Diamante" as Tier,
   points: 12450,
-  rankPosition: 8,
-  avatar: "EN",
+  rankPosition: 1,
+  avatar: "EP",
   joinedAt: "2023-03-12",
 };
 
@@ -105,21 +108,25 @@ export const mockRewards = [
 
 export const rewardCategories = ["Todos", "Ferramentas", "Cursos", "Benefícios", "Experiências", "PIX/Crédito"] as const;
 
-export const mockRanking = Array.from({ length: 20 }).map((_, i) => {
-  const names = ["Carlos Lima", "Mariana Souza", "Roberto Alves", "Patrícia Dias", "Felipe Castro", "Juliana Pires", "André Moreira", "Eduardo Narciso", "Camila Rocha", "Ricardo Tavares", "Beatriz Pinho", "Marcos Vinícius", "Sandra Lopes", "Henrique Sá", "Larissa Vidal", "Bruno Mendes", "Tatiana Reis", "Igor Bastos", "Vanessa Couto", "Daniel Prado"];
-  const types = ["Eletricista", "Integrador Solar", "Engenheiro", "Revenda", "Instalador"];
-  const cities = ["Curitiba - PR", "São Paulo - SP", "Belo Horizonte - MG", "Porto Alegre - RS", "Recife - PE", "Salvador - BA", "Goiânia - GO"];
-  const points = 25000 - i * 1200 - (i % 3) * 300;
-  return {
-    pos: i + 1,
-    name: names[i],
-    type: types[i % types.length],
-    city: cities[i % cities.length],
-    points,
-    tier: points >= 15000 ? "Diamante" : points >= 10000 ? "Ouro" : points >= 5000 ? "Prata" : "Bronze",
-    isYou: names[i] === "Eduardo Narciso",
-  };
-});
+// Ranking da campanha — 12 eletricistas (somente eletricistas participam).
+// Os 10 primeiros são premiados ao fim da campanha.
+export const mockRanking = (() => {
+  const names = ["Carlos Lima", "Roberto Alves", "Felipe Castro", "André Moreira", "Ricardo Tavares", "Marcos Vinícius", "Henrique Sá", "Bruno Mendes", "Igor Bastos", "Daniel Prado", "Anderson Ramos", "Wesley Tavares"];
+  const cities = ["Tatuí - SP", "Sorocaba - SP", "Itapetininga - SP", "Boituva - SP", "Cerquilho - SP", "Cesário Lange - SP"];
+  return names.map((name, i) => {
+    const points = 14800 - i * 1050 - (i % 3) * 220;
+    return {
+      pos: i + 1,
+      name,
+      type: "Eletricista",
+      city: cities[i % cities.length],
+      points,
+      tier: (points >= 15000 ? "Diamante" : points >= 10000 ? "Ouro" : points >= 5000 ? "Prata" : "Bronze") as Tier,
+      prize: i < 10,
+      isYou: false,
+    };
+  });
+})();
 
 export const mockReferrals = [
   { id: "ref-1", client: "Edifício Atlas", date: "2026-06-05", status: "Aprovada", points: 250 },
@@ -143,13 +150,16 @@ export const adminOverview = {
   pointsThisMonth: 482300,
   pendingRedemptions: 23,
   activeCampaigns: 6,
+  salesThisMonth: 684627.22,
+  purchasesThisMonth: 412,
+  commissionsDue: 18342.5,
 };
 
 export const adminPartners = Array.from({ length: 12 }).map((_, i) => ({
   id: `p-${i + 1}`,
-  name: ["Carlos Lima", "Mariana Souza", "Roberto Alves", "Patrícia Dias", "Felipe Castro", "Juliana Pires", "André Moreira", "Camila Rocha", "Ricardo Tavares", "Beatriz Pinho", "Marcos Vinícius", "Sandra Lopes"][i],
-  type: ["Eletricista", "Integrador Solar", "Engenheiro", "Revenda"][i % 4],
-  city: ["Curitiba - PR", "São Paulo - SP", "Belo Horizonte - MG", "Porto Alegre - RS"][i % 4],
+  name: ["Carlos Lima", "Roberto Alves", "Felipe Castro", "André Moreira", "Ricardo Tavares", "Marcos Vinícius", "Henrique Sá", "Bruno Mendes", "Igor Bastos", "Daniel Prado", "Anderson Ramos", "Wesley Tavares"][i],
+  type: "Eletricista",
+  city: ["Tatuí - SP", "Sorocaba - SP", "Itapetininga - SP", "Boituva - SP"][i % 4],
   tier: (["Diamante", "Ouro", "Prata", "Bronze"] as const)[i % 4],
   points: 20000 - i * 1300,
   status: i % 5 === 0 ? "Bloqueado" : "Ativo",
@@ -162,9 +172,32 @@ export const adminApprovals = [
 ];
 
 export const reportCityEngagement = [
-  { city: "Curitiba - PR", value: 92 },
-  { city: "São Paulo - SP", value: 88 },
-  { city: "Belo Horizonte - MG", value: 76 },
-  { city: "Porto Alegre - RS", value: 71 },
-  { city: "Recife - PE", value: 64 },
+  { city: "Tatuí - SP", value: 92 },
+  { city: "Sorocaba - SP", value: 88 },
+  { city: "Itapetininga - SP", value: 76 },
+  { city: "Boituva - SP", value: 71 },
+  { city: "Cerquilho - SP", value: 64 },
+];
+
+// Compras / Obras registradas — origem dos pontos dos parceiros.
+export type PurchaseStatus = "Confirmada" | "Em análise" | "Reprovada";
+export const mockPurchases = [
+  { id: "co-1", date: "2026-06-08", partner: "Carlos Lima", segment: "Iluminação", value: 4820.0, points: 480, seller: "Rodrigo", status: "Confirmada" as PurchaseStatus },
+  { id: "co-2", date: "2026-06-08", partner: "Mariana Souza", segment: "Energia Solar", value: 18650.0, points: 1865, seller: "Fábio", status: "Confirmada" as PurchaseStatus },
+  { id: "co-3", date: "2026-06-07", partner: "Roberto Alves", segment: "Materiais Elétricos", value: 2310.5, points: 231, seller: "Júnior", status: "Em análise" as PurchaseStatus },
+  { id: "co-4", date: "2026-06-06", partner: "Patrícia Dias", segment: "Iluminação", value: 9120.0, points: 912, seller: "Rodrigo", status: "Confirmada" as PurchaseStatus },
+  { id: "co-5", date: "2026-06-05", partner: "Felipe Castro", segment: "Materiais Elétricos", value: 1540.0, points: 154, seller: "Fábio", status: "Reprovada" as PurchaseStatus },
+  { id: "co-6", date: "2026-06-04", partner: "Juliana Pires", segment: "Energia Solar", value: 27400.0, points: 2740, seller: "Júnior", status: "Confirmada" as PurchaseStatus },
+  { id: "co-7", date: "2026-06-03", partner: "André Moreira", segment: "Iluminação", value: 6230.0, points: 623, seller: "Rodrigo", status: "Confirmada" as PurchaseStatus },
+  { id: "co-8", date: "2026-06-02", partner: "Camila Rocha", segment: "Materiais Elétricos", value: 3890.0, points: 389, seller: "Fábio", status: "Em análise" as PurchaseStatus },
+];
+
+// Comissões da equipe de vendas (Rodrigo, Fábio, Júnior).
+export type CommissionStatus = "Em aberto" | "Paga";
+export const mockCommissions = [
+  { id: "cm-1", seller: "Rodrigo", role: "Vendedor", period: "Junho/2026", sales: 38, salesValue: 184230.5, rate: 0.03, commission: 5526.92, status: "Em aberto" as CommissionStatus },
+  { id: "cm-2", seller: "Fábio", role: "Vendedor", period: "Junho/2026", sales: 31, salesValue: 152980.0, rate: 0.03, commission: 4589.4, status: "Em aberto" as CommissionStatus },
+  { id: "cm-3", seller: "Júnior", role: "Vendedor", period: "Junho/2026", sales: 27, salesValue: 141360.0, rate: 0.03, commission: 4240.8, status: "Em aberto" as CommissionStatus },
+  { id: "cm-4", seller: "Rodrigo", role: "Vendedor", period: "Maio/2026", sales: 42, salesValue: 198450.0, rate: 0.03, commission: 5953.5, status: "Paga" as CommissionStatus },
+  { id: "cm-5", seller: "Fábio", role: "Vendedor", period: "Maio/2026", sales: 29, salesValue: 138720.0, rate: 0.03, commission: 4161.6, status: "Paga" as CommissionStatus },
 ];

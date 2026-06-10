@@ -1,29 +1,36 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Zap, Mail, Lock } from "lucide-react";
+import { Mail, Lock } from "lucide-react";
+import { useAuth } from "@/lib/auth";
+import { Logo, LogoMark } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Entrar — Clube Conecta Elétrica" }] }),
+  head: () => ({ meta: [{ title: "Entrar — Elettro Ponto · Clube de Pontos" }] }),
   component: LoginPage,
 });
 
 function LoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("eduardo@conectaeletrica.com");
-  const [password, setPassword] = useState("demo1234");
+  const { signIn } = useAuth();
+  const [email, setEmail] = useState("eduardo.f.narciso@gmail.com");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      toast.success("Bem-vindo de volta, Eduardo!");
-      navigate({ to: "/" });
-    }, 700);
+    const { error } = await signIn(email, password);
+    if (error) {
+      toast.error("Não foi possível entrar. Verifique e-mail e senha.");
+      setLoading(false);
+      return;
+    }
+    toast.success("Bem-vindo ao Clube de Pontos Elettro Ponto!");
+    navigate({ to: "/" });
   };
 
   return (
@@ -33,27 +40,27 @@ function LoginPage() {
         <div className="absolute inset-0 opacity-[0.07] pointer-events-none"
           style={{ backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)", backgroundSize: "24px 24px" }} />
         <div className="relative flex items-center gap-3">
-          <div className="h-11 w-11 rounded-xl bg-energy text-energy-foreground flex items-center justify-center">
-            <Zap className="h-6 w-6" strokeWidth={2.5} />
-          </div>
+          <LogoMark className="h-12 w-12" />
           <div>
-            <div className="text-lg font-semibold">Clube Conecta Elétrica</div>
-            <div className="text-xs uppercase tracking-widest text-sidebar-foreground/60">SaaS Programa de Parceiros</div>
+            <div className="text-lg font-extrabold italic tracking-tight">
+              Elettro<span className="align-super text-[0.5em] font-semibold">®</span> <span className="font-medium not-italic opacity-90">ponto</span>
+            </div>
+            <div className="text-xs uppercase tracking-widest text-sidebar-foreground/60">Clube de Pontos do Eletricista</div>
           </div>
         </div>
         <div className="relative space-y-6 max-w-md">
           <h1 className="text-4xl font-bold leading-tight">
-            Energize sua rede de <span className="text-energy">parceiros</span>.
+            Pontue, suba no <span className="text-energy">ranking</span> e ganhe prêmios.
           </h1>
           <p className="text-sidebar-foreground/70">
-            Programa de relacionamento, pontuação e fidelização para eletricistas,
-            engenheiros, instaladores solares e revendas do setor elétrico.
+            Programa de pontuação e premiação para eletricistas parceiros da
+            Elettro Ponto. A cada compra, mais pontos no ranking da campanha.
           </p>
           <div className="grid grid-cols-3 gap-4 pt-4">
             {[
-              { v: "+1.800", l: "Parceiros" },
-              { v: "12M+", l: "Pontos distribuídos" },
-              { v: "98%", l: "Satisfação" },
+              { v: "12", l: "Eletricistas" },
+              { v: "Top 10", l: "Premiados" },
+              { v: "Tatuí-SP", l: "Elettro Ponto" },
             ].map((s) => (
               <div key={s.l} className="border-l-2 border-energy pl-3">
                 <div className="text-2xl font-bold">{s.v}</div>
@@ -63,18 +70,15 @@ function LoginPage() {
           </div>
         </div>
         <div className="relative text-xs text-sidebar-foreground/50">
-          © 2026 Clube Conecta Elétrica. Todos os direitos reservados.
+          © 2026 Elettro Ponto. Todos os direitos reservados.
         </div>
       </div>
 
       {/* Form */}
       <div className="flex items-center justify-center p-6 sm:p-10 bg-background">
         <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-6">
-          <div className="lg:hidden flex items-center gap-2 mb-2">
-            <div className="h-10 w-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center">
-              <Zap className="h-5 w-5" />
-            </div>
-            <div className="font-semibold">Clube Conecta Elétrica</div>
+          <div className="lg:hidden mb-2">
+            <Logo className="text-foreground" />
           </div>
           <div>
             <h2 className="text-2xl font-bold">Entrar na sua conta</h2>
@@ -107,7 +111,7 @@ function LoginPage() {
             {loading ? "Entrando..." : "Entrar"}
           </Button>
           <p className="text-xs text-center text-muted-foreground">
-            Ambiente de demonstração — qualquer e-mail e senha funcionam.
+            Acesso restrito — use as credenciais cadastradas no sistema.
           </p>
         </form>
       </div>

@@ -28,8 +28,11 @@ const statusStyles: Record<string, string> = {
   Ativo: "bg-success/15 text-success border-success/30",
   Bloqueado: "bg-destructive/15 text-destructive border-destructive/30",
   Confirmado: "bg-success/15 text-success border-success/30",
+  Confirmada: "bg-success/15 text-success border-success/30",
   Concluído: "bg-success/15 text-success border-success/30",
   "Em separação": "bg-energy/15 text-foreground border-energy/30",
+  "Em aberto": "bg-energy/15 text-foreground border-energy/30",
+  Paga: "bg-success/15 text-success border-success/30",
 };
 
 export function StatusBadge({ status, className }: { status: string; className?: string }) {

@@ -34,7 +34,7 @@ function Dashboard() {
           Olá, {currentUser.name.split(" ")[0]} 👋
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Aqui está o resumo da sua jornada no Clube Conecta Elétrica.
+          Aqui está o resumo da campanha no Clube de Pontos Elettro Ponto.
         </p>
       </div>
 
@@ -56,7 +56,7 @@ function Dashboard() {
           label="Posição no ranking"
           value={`${currentUser.rankPosition}º`}
           icon={<Trophy className="h-4 w-4" />}
-          sub="Top 10 nacional"
+          sub="entre 12 eletricistas"
         />
         <StatCard
           label="Faltam para Diamante"

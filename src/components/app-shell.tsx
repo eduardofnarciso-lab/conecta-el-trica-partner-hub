@@ -12,12 +12,11 @@ import {
   Menu,
   X,
   LogOut,
-  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { currentUser } from "@/lib/mocks";
+import { Logo } from "@/components/logo";
+import { useAuth, roleLabel } from "@/lib/auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
@@ -34,14 +33,8 @@ const nav: NavItem[] = [
 
 function Brand() {
   return (
-    <div className="flex items-center gap-2 px-2">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-energy text-energy-foreground shadow-sm">
-        <Zap className="h-5 w-5" strokeWidth={2.5} />
-      </div>
-      <div className="leading-tight">
-        <div className="text-sm font-semibold text-sidebar-foreground">Clube Conecta</div>
-        <div className="text-[11px] uppercase tracking-wider text-sidebar-foreground/60">Elétrica</div>
-      </div>
+    <div className="px-2">
+      <Logo className="text-sidebar-foreground" />
     </div>
   );
 }
@@ -77,7 +70,21 @@ function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () =
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
+  const { profile, signOut } = useAuth();
   const [open, setOpen] = useState(false);
+
+  const initials = (profile?.nome ?? "?")
+    .split(" ")
+    .map((p) => p[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+  async function handleLogout() {
+    await signOut();
+    navigate({ to: "/login" });
+  }
 
   return (
     <div className="flex min-h-screen w-full bg-background">
@@ -91,7 +98,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
         <div className="border-t border-sidebar-border p-3">
           <button
-            onClick={() => navigate({ to: "/login" })}
+            onClick={handleLogout}
             className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
           >
             <LogOut className="h-4 w-4" />
@@ -131,19 +138,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Menu className="h-5 w-5" />
           </Button>
           <div className="flex-1" />
-          <div className="hidden sm:flex items-center gap-2 text-sm">
-            <Badge variant="secondary" className="bg-energy/15 text-foreground border border-energy/30">
-              <Zap className="h-3 w-3 mr-1" /> {currentUser.points.toLocaleString("pt-BR")} pts
-            </Badge>
-          </div>
           <div className="flex items-center gap-3 pl-2 border-l border-border">
             <div className="text-right hidden sm:block">
-              <div className="text-sm font-medium leading-tight">{currentUser.name}</div>
-              <div className="text-xs text-muted-foreground">{currentUser.type} · {currentUser.tier}</div>
+              <div className="text-sm font-medium leading-tight">{profile?.nome ?? "—"}</div>
+              <div className="text-xs text-muted-foreground">{roleLabel(profile?.role)}</div>
             </div>
             <Avatar className="h-9 w-9 border-2 border-energy/40">
               <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
-                {currentUser.avatar}
+                {initials}
               </AvatarFallback>
             </Avatar>
           </div>

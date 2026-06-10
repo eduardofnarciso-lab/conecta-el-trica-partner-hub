@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Users, Zap, Clock, Megaphone, TrendingUp, Trophy } from "lucide-react";
+import { Users, Zap, Clock, Megaphone, TrendingUp, Trophy, Receipt, DollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TierBadge } from "@/components/badges";
 import { adminOverview, mockRanking, monthlyPoints } from "@/lib/mocks";
@@ -12,9 +12,11 @@ function AdminOverview() {
   const maxPts = Math.max(...monthlyPoints.map((m) => m.points));
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-        <Kpi label="Total de parceiros" value={adminOverview.totalPartners.toLocaleString("pt-BR")} icon={<Users className="h-4 w-4" />} delta="+8% mês" />
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <Kpi label="Eletricistas" value={String(mockRanking.length)} icon={<Users className="h-4 w-4" />} delta="ranking ativo" />
         <Kpi label="Pontos distribuídos" value={adminOverview.pointsThisMonth.toLocaleString("pt-BR")} icon={<Zap className="h-4 w-4" />} delta="+12%" />
+        <Kpi label="Vendas no mês" value={adminOverview.salesThisMonth.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })} icon={<Receipt className="h-4 w-4" />} delta={`${adminOverview.purchasesThisMonth} notas`} />
+        <Kpi label="Comissões a pagar" value={adminOverview.commissionsDue.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })} icon={<DollarSign className="h-4 w-4" />} delta="3 vendedores" />
         <Kpi label="Resgates pendentes" value={String(adminOverview.pendingRedemptions)} icon={<Clock className="h-4 w-4" />} delta="3 hoje" />
         <Kpi label="Campanhas ativas" value={String(adminOverview.activeCampaigns)} icon={<Megaphone className="h-4 w-4" />} delta="2 novas" />
       </div>

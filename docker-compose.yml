@@ -2,7 +2,11 @@ version: "3.9"
 services:
   web:
     build: .
-    container_name: clube-conecta-eletrica
+    container_name: elettro-clube-pontos
     restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOST=0.0.0.0
     ports:
-      - "8080:80"
+      - "8080:3000"

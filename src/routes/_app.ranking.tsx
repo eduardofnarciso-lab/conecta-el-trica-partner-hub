@@ -104,18 +104,19 @@ function RankingPage() {
         <div className="text-sm text-muted-foreground">Nenhuma pontuação registrada ainda.</div>
       ) : (
         <>
-          {/* Pódio */}
-          {rows.length >= 3 && (
+          {/* Pódio (funciona com 1, 2 ou 3 participantes) */}
+          {rows.length >= 1 && (
             <div className="grid grid-cols-3 gap-3 md:gap-6 max-w-2xl mx-auto items-end">
               {[1, 0, 2].map((i) => {
                 const p = rows[i];
-                const heights = ["h-24", "h-32", "h-20"];
-                const colors = ["bg-silver/60", "bg-gold/70", "bg-bronze/50"];
+                if (!p) return <div key={"vazio-" + i} />;
+                const altura = i === 0 ? "h-32" : i === 1 ? "h-24" : "h-20";
+                const cor = i === 0 ? "bg-gold/70" : i === 1 ? "bg-silver/60" : "bg-bronze/50";
                 return (
                   <div key={p.pos} className="text-center">
                     <div className="text-sm font-semibold truncate">{p.name}</div>
                     <div className="text-xs text-muted-foreground">{p.points.toLocaleString("pt-BR")} pts</div>
-                    <div className={cn("mt-2 rounded-t-lg flex items-center justify-center text-2xl font-bold", heights[i === 1 ? 0 : i === 0 ? 1 : 2], colors[i === 1 ? 0 : i === 0 ? 1 : 2])}>
+                    <div className={cn("mt-2 rounded-t-lg flex items-center justify-center text-2xl font-bold", altura, cor)}>
                       {i === 0 && <Crown className="h-5 w-5 mr-1 text-energy" />}
                       {p.pos}º
                     </div>

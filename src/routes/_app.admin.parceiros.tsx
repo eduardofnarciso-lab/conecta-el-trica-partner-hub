@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,136 +12,279 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { TierBadge, StatusBadge } from "@/components/badges";
-import { adminPartners, type Tier } from "@/lib/mocks";
-import { Eye, Pencil, Ban, Search, Unlock } from "lucide-react";
-import { useState } from "react";
+import { StatusBadge } from "@/components/badges";
+import { supabase } from "@/lib/supabase";
+import { Eye, Pencil, Ban, Search, Unlock, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/admin/parceiros")({
   component: AdminPartners,
 });
 
-type Partner = (typeof adminPartners)[number];
+const STATUS_LABEL: Record<string, string> = {
+  ativo: "Ativo",
+  bloqueado: "Bloqueado",
+  pendente: "Em análise",
+};
+
+type Eletricista = {
+  id: string;
+  nome: string;
+  apelido: string | null;
+  telefone: string | null;
+  email: string | null;
+  cidade: string | null;
+  uf: string | null;
+  segmento: string | null;
+  status: string;
+  observacoes: string | null;
+};
+
+async function fetchEletricistas(): Promise<Eletricista[]> {
+  const { data, error } = await supabase
+    .from("eletricistas")
+    .select("id, nome, apelido, telefone, email, cidade, uf, segmento, status, observacoes")
+    .order("nome");
+  if (error) throw error;
+  return (data ?? []) as Eletricista[];
+}
 
 function AdminPartners() {
-  const [partners, setPartners] = useState<Partner[]>(adminPartners);
+  const queryClient = useQueryClient();
+  const { data: parceiros = [], isLoading } = useQuery({
+    queryKey: ["admin-eletricistas"],
+    queryFn: fetchEletricistas,
+  });
   const [q, setQ] = useState("");
-  const [viewing, setViewing] = useState<Partner | null>(null);
-  const [editing, setEditing] = useState<Partner | null>(null);
-  const [form, setForm] = useState({ name: "", city: "", tier: "Bronze", points: 0 });
+  const [viewing, setViewing] = useState<Eletricista | null>(null);
+  const [editing, setEditing] = useState<Eletricista | null>(null);
+  const [novoOpen, setNovoOpen] = useState(false);
+  const [form, setForm] = useState({ nome: "", telefone: "", cidade: "", status: "ativo" });
+  const [saving, setSaving] = useState(false);
 
-  const list = partners.filter((p) => p.name.toLowerCase().includes(q.toLowerCase()));
+  const list = parceiros.filter((p) => p.nome.toLowerCase().includes(q.toLowerCase()));
 
-  const openEdit = (p: Partner) => {
-    setForm({ name: p.name, city: p.city, tier: p.tier, points: p.points });
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ["admin-eletricistas"] });
+
+  const { data: saldoView } = useQuery({
+    queryKey: ["saldo-eletricista", viewing?.id],
+    enabled: !!viewing,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vw_saldo_eletricista")
+        .select("saldo")
+        .eq("eletricista_id", viewing!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.saldo ?? 0;
+    },
+  });
+
+  const openEdit = (p: Eletricista) => {
+    setForm({ nome: p.nome, telefone: p.telefone ?? "", cidade: p.cidade ?? "", status: p.status });
     setEditing(p);
   };
 
-  const saveEdit = () => {
+  async function saveEdit() {
     if (!editing) return;
-    if (!form.name.trim()) {
+    if (!form.nome.trim()) {
       toast.error("Informe o nome do parceiro.");
       return;
     }
-    setPartners((prev) =>
-      prev.map((p) =>
-        p.id === editing.id
-          ? { ...p, name: form.name.trim(), city: form.city.trim(), tier: form.tier as Tier, points: Number(form.points) || 0 }
-          : p,
-      ),
-    );
+    setSaving(true);
+    const { error } = await supabase
+      .from("eletricistas")
+      .update({
+        nome: form.nome.trim(),
+        telefone: form.telefone.trim() || null,
+        cidade: form.cidade.trim() || null,
+        status: form.status,
+      })
+      .eq("id", editing.id);
+    setSaving(false);
+    if (error) {
+      toast.error("Não foi possível salvar: " + error.message);
+      return;
+    }
     setEditing(null);
-    toast.success(`Parceiro ${form.name} atualizado.`);
-  };
+    toast.success(`Parceiro ${form.nome.trim()} atualizado.`);
+    refresh();
+  }
 
-  const toggleBlock = (p: Partner) => {
-    const blocked = p.status === "Bloqueado";
-    setPartners((prev) =>
-      prev.map((x) => (x.id === p.id ? { ...x, status: blocked ? "Ativo" : "Bloqueado" } : x)),
-    );
-    blocked ? toast.success(`Parceiro ${p.name} desbloqueado.`) : toast.error(`Parceiro ${p.name} bloqueado.`);
-  };
+  async function toggleBlock(p: Eletricista) {
+    const novoStatus = p.status === "bloqueado" ? "ativo" : "bloqueado";
+    const { error } = await supabase.from("eletricistas").update({ status: novoStatus }).eq("id", p.id);
+    if (error) {
+      toast.error("Não foi possível atualizar: " + error.message);
+      return;
+    }
+    novoStatus === "ativo"
+      ? toast.success(`Parceiro ${p.nome} desbloqueado.`)
+      : toast.error(`Parceiro ${p.nome} bloqueado.`);
+    refresh();
+  }
+
+  async function criarParceiro() {
+    if (!form.nome.trim()) {
+      toast.error("Informe o nome do parceiro.");
+      return;
+    }
+    setSaving(true);
+    const { error } = await supabase.from("eletricistas").insert({
+      nome: form.nome.trim(),
+      telefone: form.telefone.trim() || null,
+      cidade: form.cidade.trim() || null,
+      status: "ativo",
+    });
+    setSaving(false);
+    if (error) {
+      toast.error("Não foi possível cadastrar: " + error.message);
+      return;
+    }
+    setNovoOpen(false);
+    toast.success(`Parceiro ${form.nome.trim()} cadastrado.`);
+    refresh();
+  }
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap">
-        <CardTitle className="text-base">Parceiros</CardTitle>
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar parceiro..." value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
+        <CardTitle className="text-base">Parceiros (Eletricistas)</CardTitle>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Buscar parceiro..." value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
+          </div>
+          <Dialog
+            open={novoOpen}
+            onOpenChange={(o) => {
+              setNovoOpen(o);
+              if (o) setForm({ nome: "", telefone: "", cidade: "", status: "ativo" });
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button><Plus className="h-4 w-4 mr-1" /> Novo parceiro</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Novo parceiro</DialogTitle>
+                <DialogDescription>Cadastre um eletricista no clube.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="novo-nome">Nome *</Label>
+                  <Input id="novo-nome" value={form.nome} onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="novo-telefone">Telefone</Label>
+                  <Input id="novo-telefone" value={form.telefone} onChange={(e) => setForm((f) => ({ ...f, telefone: e.target.value }))} placeholder="(15) 99999-9999" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="novo-cidade">Cidade</Label>
+                  <Input id="novo-cidade" value={form.cidade} onChange={(e) => setForm((f) => ({ ...f, cidade: e.target.value }))} placeholder="Tatuí" />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setNovoOpen(false)}>Cancelar</Button>
+                <Button onClick={criarParceiro} disabled={saving}>{saving ? "Salvando…" : "Cadastrar"}</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-              <tr>
-                <th className="py-3 pr-3">Nome</th>
-                <th className="py-3 pr-3 hidden md:table-cell">Tipo</th>
-                <th className="py-3 pr-3 hidden lg:table-cell">Cidade</th>
-                <th className="py-3 pr-3">Categoria</th>
-                <th className="py-3 pr-3 text-right">Pontos</th>
-                <th className="py-3 pr-3">Status</th>
-                <th className="py-3 pr-3 text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.map((p) => (
-                <tr key={p.id} className="border-b border-border last:border-0">
-                  <td className="py-3 pr-3 font-medium">{p.name}</td>
-                  <td className="py-3 pr-3 hidden md:table-cell text-muted-foreground">{p.type}</td>
-                  <td className="py-3 pr-3 hidden lg:table-cell text-muted-foreground">{p.city}</td>
-                  <td className="py-3 pr-3"><TierBadge tier={p.tier} /></td>
-                  <td className="py-3 pr-3 text-right font-semibold">{p.points.toLocaleString("pt-BR")}</td>
-                  <td className="py-3 pr-3"><StatusBadge status={p.status} /></td>
-                  <td className="py-3 pr-3">
-                    <div className="flex gap-1 justify-end">
-                      <Button size="icon" variant="ghost" title="Ver detalhes" onClick={() => setViewing(p)}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" title="Editar" onClick={() => openEdit(p)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        title={p.status === "Bloqueado" ? "Desbloquear" : "Bloquear"}
-                        onClick={() => toggleBlock(p)}
-                      >
-                        {p.status === "Bloqueado" ? <Unlock className="h-4 w-4" /> : <Ban className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </td>
+        {isLoading ? (
+          <div className="text-sm text-muted-foreground py-6">Carregando parceiros…</div>
+        ) : list.length === 0 ? (
+          <div className="text-sm text-muted-foreground py-6">
+            {q ? "Nenhum parceiro encontrado para a busca." : "Nenhum parceiro cadastrado ainda. Clique em “Novo parceiro” para começar."}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
+                <tr>
+                  <th className="py-3 pr-3">Nome</th>
+                  <th className="py-3 pr-3 hidden lg:table-cell">Cidade</th>
+                  <th className="py-3 pr-3 hidden md:table-cell">Segmento</th>
+                  <th className="py-3 pr-3 hidden md:table-cell">Telefone</th>
+                  <th className="py-3 pr-3">Status</th>
+                  <th className="py-3 pr-3 text-right">Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {list.map((p) => (
+                  <tr key={p.id} className="border-b border-border last:border-0">
+                    <td className="py-3 pr-3 font-medium">{p.nome}</td>
+                    <td className="py-3 pr-3 hidden lg:table-cell text-muted-foreground">
+                      {p.cidade ? `${p.cidade}${p.uf ? " - " + p.uf : ""}` : "—"}
+                    </td>
+                    <td className="py-3 pr-3 hidden md:table-cell text-muted-foreground">{p.segmento ?? "—"}</td>
+                    <td className="py-3 pr-3 hidden md:table-cell text-muted-foreground">{p.telefone ?? "—"}</td>
+                    <td className="py-3 pr-3"><StatusBadge status={STATUS_LABEL[p.status] ?? p.status} /></td>
+                    <td className="py-3 pr-3">
+                      <div className="flex gap-1 justify-end">
+                        <Button size="icon" variant="ghost" title="Ver detalhes" onClick={() => setViewing(p)}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" title="Editar" onClick={() => openEdit(p)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          title={p.status === "bloqueado" ? "Desbloquear" : "Bloquear"}
+                          onClick={() => toggleBlock(p)}
+                        >
+                          {p.status === "bloqueado" ? <Unlock className="h-4 w-4" /> : <Ban className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </CardContent>
 
       {/* Ver detalhes */}
       <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{viewing?.name}</DialogTitle>
+            <DialogTitle>{viewing?.nome}</DialogTitle>
             <DialogDescription>Detalhes do parceiro</DialogDescription>
           </DialogHeader>
           {viewing && (
             <div className="space-y-3 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Tipo</span><span>{viewing.type}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Cidade</span><span>{viewing.city}</span></div>
-              <div className="flex justify-between items-center"><span className="text-muted-foreground">Categoria</span><TierBadge tier={viewing.tier} /></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Pontos</span><span className="font-semibold">{viewing.points.toLocaleString("pt-BR")}</span></div>
-              <div className="flex justify-between items-center"><span className="text-muted-foreground">Status</span><StatusBadge status={viewing.status} /></div>
+              {viewing.apelido && (
+                <div className="flex justify-between"><span className="text-muted-foreground">Apelido</span><span>{viewing.apelido}</span></div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Cidade</span>
+                <span>{viewing.cidade ? `${viewing.cidade}${viewing.uf ? " - " + viewing.uf : ""}` : "—"}</span>
+              </div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Segmento</span><span>{viewing.segmento ?? "—"}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Telefone</span><span>{viewing.telefone ?? "—"}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">E-mail</span><span>{viewing.email ?? "—"}</span></div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Saldo de pontos</span>
+                <span className="font-semibold">
+                  {saldoView === undefined ? "Carregando…" : `${Number(saldoView).toLocaleString("pt-BR")} pts`}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Status</span>
+                <StatusBadge status={STATUS_LABEL[viewing.status] ?? viewing.status} />
+              </div>
+              {viewing.observacoes && (
+                <div>
+                  <div className="text-muted-foreground mb-1">Observações</div>
+                  <div>{viewing.observacoes}</div>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
@@ -154,40 +299,36 @@ function AdminPartners() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="edit-name">Nome</Label>
-              <Input id="edit-name" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+              <Label htmlFor="edit-nome">Nome</Label>
+              <Input id="edit-nome" value={form.nome} onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="edit-city">Cidade</Label>
-              <Input id="edit-city" value={form.city} onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))} />
+              <Label htmlFor="edit-telefone">Telefone</Label>
+              <Input id="edit-telefone" value={form.telefone} onChange={(e) => setForm((f) => ({ ...f, telefone: e.target.value }))} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>Categoria</Label>
-                <Select value={form.tier} onValueChange={(v) => setForm((f) => ({ ...f, tier: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {["Bronze", "Prata", "Ouro", "Diamante"].map((t) => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="edit-cidade">Cidade</Label>
+                <Input id="edit-cidade" value={form.cidade} onChange={(e) => setForm((f) => ({ ...f, cidade: e.target.value }))} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="edit-points">Pontos</Label>
-                <Input
-                  id="edit-points"
-                  type="number"
-                  min={0}
-                  value={form.points}
-                  onChange={(e) => setForm((f) => ({ ...f, points: Number(e.target.value) }))}
-                />
+                <Label htmlFor="edit-status">Status</Label>
+                <select
+                  id="edit-status"
+                  value={form.status}
+                  onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                >
+                  <option value="ativo">Ativo</option>
+                  <option value="bloqueado">Bloqueado</option>
+                  <option value="pendente">Pendente</option>
+                </select>
               </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
-            <Button onClick={saveEdit}>Salvar</Button>
+            <Button onClick={saveEdit} disabled={saving}>{saving ? "Salvando…" : "Salvar"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -5,7 +5,19 @@ import { Trophy, Crown, Gift } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TierBadge } from "@/components/badges";
 import { supabase } from "@/lib/supabase";
-import { currentTier } from "@/lib/mocks";
+import type { Tier } from "@/components/badges";
+
+const TIER_MINS: { name: Tier; min: number }[] = [
+  { name: "Bronze", min: 0 },
+  { name: "Prata", min: 5000 },
+  { name: "Ouro", min: 10000 },
+  { name: "Diamante", min: 15000 },
+];
+function currentTier(points: number): Tier {
+  let cur: Tier = "Bronze";
+  for (const t of TIER_MINS) if (points >= t.min) cur = t.name;
+  return cur;
+}
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/ranking")({

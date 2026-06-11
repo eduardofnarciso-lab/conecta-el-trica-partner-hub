@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import type { Tier } from "@/lib/mocks";
+export type Tier = "Bronze" | "Prata" | "Ouro" | "Diamante";
 
 const tierStyles: Record<Tier, string> = {
   Bronze: "bg-bronze/15 text-bronze border-bronze/30",

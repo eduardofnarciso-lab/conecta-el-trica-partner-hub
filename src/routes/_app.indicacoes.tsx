@@ -1,32 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { UserPlus, Send } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { UserPlus, Megaphone, ArrowRight } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { StatusBadge } from "@/components/badges";
-import { mockReferrals } from "@/lib/mocks";
-import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/indicacoes")({
   component: IndicacoesPage,
 });
 
 function IndicacoesPage() {
-  const [form, setForm] = useState({
-    name: "", phone: "", city: "", type: "Residencial", notes: "",
-  });
-  const set = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
-
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast.success("Indicação enviada com sucesso! Você será notificado quando for analisada.");
-    setForm({ name: "", phone: "", city: "", type: "Residencial", notes: "" });
-  };
-
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div>
@@ -36,82 +17,28 @@ function IndicacoesPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-5">
-        <Card className="lg:col-span-2 h-fit">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2"><UserPlus className="h-4 w-4" /> Nova indicação</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={submit} className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="name">Nome do cliente/obra</Label>
-                <Input id="name" required value={form.name} onChange={(e) => set("name", e.target.value)} />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="phone">Telefone</Label>
-                  <Input id="phone" required value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="(11) 99999-9999" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="city">Cidade</Label>
-                  <Input id="city" required value={form.city} onChange={(e) => set("city", e.target.value)} />
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <Label>Tipo de demanda</Label>
-                <Select value={form.type} onValueChange={(v) => set("type", v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Residencial">Residencial</SelectItem>
-                    <SelectItem value="Comercial">Comercial</SelectItem>
-                    <SelectItem value="Industrial">Industrial</SelectItem>
-                    <SelectItem value="Solar">Solar</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="notes">Observações</Label>
-                <Textarea id="notes" rows={3} value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Detalhes sobre a obra..." />
-              </div>
-              <Button type="submit" className="w-full">
-                <Send className="h-4 w-4 mr-2" /> Enviar indicação
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle className="text-base">Indicações enviadas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                  <tr>
-                    <th className="py-3 pr-3">Cliente</th>
-                    <th className="py-3 pr-3">Data</th>
-                    <th className="py-3 pr-3">Status</th>
-                    <th className="py-3 pr-3 text-right">Pontos</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mockReferrals.map((r) => (
-                    <tr key={r.id} className="border-b border-border last:border-0">
-                      <td className="py-3 pr-3 font-medium">{r.client}</td>
-                      <td className="py-3 pr-3 text-muted-foreground">{new Date(r.date).toLocaleDateString("pt-BR")}</td>
-                      <td className="py-3 pr-3"><StatusBadge status={r.status} /></td>
-                      <td className={`py-3 pr-3 text-right font-semibold ${r.points > 0 ? "text-success" : "text-muted-foreground"}`}>
-                        {r.points > 0 ? `+${r.points}` : "—"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="overflow-hidden">
+        <div className="h-24 bg-gradient-to-r from-primary via-primary/80 to-sidebar relative">
+          <div className="absolute inset-0 opacity-20"
+            style={{ backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)", backgroundSize: "16px 16px" }} />
+        </div>
+        <CardContent className="py-12 text-center">
+          <div className="mx-auto h-14 w-14 -mt-20 rounded-full bg-energy text-energy-foreground flex items-center justify-center border-4 border-card">
+            <UserPlus className="h-6 w-6" />
+          </div>
+          <h2 className="text-xl font-bold mt-4">Programa de indicações em breve</h2>
+          <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
+            Estamos preparando uma forma simples de você indicar obras e clientes
+            e ganhar pontos a cada indicação convertida. Aguarde as novidades!
+          </p>
+          <Button asChild variant="secondary" className="mt-6">
+            <Link to="/campanhas">
+              <Megaphone className="h-4 w-4 mr-2" /> Enquanto isso, veja as campanhas ativas
+              <ArrowRight className="h-4 w-4 ml-1" />
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

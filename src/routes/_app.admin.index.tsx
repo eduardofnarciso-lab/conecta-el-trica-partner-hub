@@ -1,68 +1,150 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Users, Zap, Clock, Megaphone, TrendingUp, Trophy, Receipt, DollarSign } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { Users, Zap, Clock, Megaphone, Receipt, FileClock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TierBadge } from "@/components/badges";
-import { adminOverview, mockRanking, monthlyPoints } from "@/lib/mocks";
+import { StatusBadge } from "@/components/badges";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/_app/admin/")({
   component: AdminOverview,
 });
 
+function brl(v: number) {
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+}
+
+const NOTA_STATUS_LABEL: Record<string, string> = {
+  em_analise: "Em análise",
+  confirmada: "Confirmada",
+  reprovada: "Reprovada",
+};
+
+type Overview = {
+  eletricistasAtivos: number;
+  campanhasAtivas: number;
+  notasEmAnalise: number;
+  pontosNoMes: number;
+  valorNotasNoMes: number;
+  resgatesSolicitados: number;
+};
+
+type UltimaNota = {
+  id: string;
+  numero_nota: string | null;
+  valor: number;
+  pontos: number;
+  status: string;
+  data_compra: string;
+  eletricista: { nome: string } | null;
+};
+
+async function fetchOverview(): Promise<Overview> {
+  const now = new Date();
+  const inicioMesISO = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const inicioMesData = inicioMesISO.slice(0, 10);
+
+  const [eletricistas, campanhas, notasAnalise, transacoes, notasMes, resgates] = await Promise.all([
+    supabase.from("eletricistas").select("id", { count: "exact", head: true }).eq("status", "ativo"),
+    supabase.from("campanhas").select("id", { count: "exact", head: true }).eq("status", "ativa"),
+    supabase.from("notas").select("id", { count: "exact", head: true }).eq("status", "em_analise"),
+    supabase
+      .from("transacoes_pontos")
+      .select("pontos")
+      .eq("tipo", "ganho")
+      .eq("status", "confirmado")
+      .gte("created_at", inicioMesISO),
+    supabase.from("notas").select("valor").gte("data_compra", inicioMesData),
+    supabase.from("resgates").select("id", { count: "exact", head: true }).eq("status", "solicitado"),
+  ]);
+
+  for (const r of [eletricistas, campanhas, notasAnalise, transacoes, notasMes, resgates]) {
+    if (r.error) throw r.error;
+  }
+
+  return {
+    eletricistasAtivos: eletricistas.count ?? 0,
+    campanhasAtivas: campanhas.count ?? 0,
+    notasEmAnalise: notasAnalise.count ?? 0,
+    pontosNoMes: (transacoes.data ?? []).reduce((s, t) => s + (t.pontos ?? 0), 0),
+    valorNotasNoMes: (notasMes.data ?? []).reduce((s, n) => s + Number(n.valor ?? 0), 0),
+    resgatesSolicitados: resgates.count ?? 0,
+  };
+}
+
+async function fetchUltimasNotas(): Promise<UltimaNota[]> {
+  const { data, error } = await supabase
+    .from("notas")
+    .select("id, numero_nota, valor, pontos, status, data_compra, eletricista:eletricistas(nome)")
+    .order("created_at", { ascending: false })
+    .limit(5);
+  if (error) throw error;
+  return (data ?? []) as unknown as UltimaNota[];
+}
+
 function AdminOverview() {
-  const maxPts = Math.max(...monthlyPoints.map((m) => m.points));
+  const { data: ov, isLoading } = useQuery({ queryKey: ["admin-overview"], queryFn: fetchOverview });
+  const { data: ultimas = [], isLoading: loadingNotas } = useQuery({
+    queryKey: ["admin-ultimas-notas"],
+    queryFn: fetchUltimasNotas,
+  });
+
+  const fmt = (v: number | undefined, f?: (n: number) => string) =>
+    isLoading || v === undefined ? "—" : f ? f(v) : v.toLocaleString("pt-BR");
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <Kpi label="Eletricistas" value={String(mockRanking.length)} icon={<Users className="h-4 w-4" />} delta="ranking ativo" />
-        <Kpi label="Pontos distribuídos" value={adminOverview.pointsThisMonth.toLocaleString("pt-BR")} icon={<Zap className="h-4 w-4" />} delta="+12%" />
-        <Kpi label="Vendas no mês" value={adminOverview.salesThisMonth.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })} icon={<Receipt className="h-4 w-4" />} delta={`${adminOverview.purchasesThisMonth} notas`} />
-        <Kpi label="Comissões a pagar" value={adminOverview.commissionsDue.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })} icon={<DollarSign className="h-4 w-4" />} delta="3 vendedores" />
-        <Kpi label="Resgates pendentes" value={String(adminOverview.pendingRedemptions)} icon={<Clock className="h-4 w-4" />} delta="3 hoje" />
-        <Kpi label="Campanhas ativas" value={String(adminOverview.activeCampaigns)} icon={<Megaphone className="h-4 w-4" />} delta="2 novas" />
+        <Kpi label="Eletricistas ativos" value={fmt(ov?.eletricistasAtivos)} icon={<Users className="h-4 w-4" />} />
+        <Kpi label="Campanhas ativas" value={fmt(ov?.campanhasAtivas)} icon={<Megaphone className="h-4 w-4" />} />
+        <Kpi label="Notas em análise" value={fmt(ov?.notasEmAnalise)} icon={<FileClock className="h-4 w-4" />} />
+        <Kpi label="Pontos no mês" value={fmt(ov?.pontosNoMes)} icon={<Zap className="h-4 w-4" />} />
+        <Kpi label="Notas no mês" value={fmt(ov?.valorNotasNoMes, brl)} icon={<Receipt className="h-4 w-4" />} />
+        <Kpi label="Resgates solicitados" value={fmt(ov?.resgatesSolicitados)} icon={<Clock className="h-4 w-4" />} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Engajamento mensal</CardTitle>
-            <div className="text-xs text-success flex items-center gap-1"><TrendingUp className="h-3 w-3" /> +24%</div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-end justify-between gap-3 h-48">
-              {monthlyPoints.map((m) => (
-                <div key={m.month} className="flex-1 flex flex-col items-center gap-2">
-                  <div className="text-[10px] text-muted-foreground">{m.points}</div>
-                  <div className="w-full rounded-t-md bg-gradient-to-t from-primary to-energy/70" style={{ height: `${(m.points / maxPts) * 100}%` }} />
-                  <div className="text-xs text-muted-foreground">{m.month}</div>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-base">Últimas notas lançadas</CardTitle>
+          <Link to="/admin/notas" className="text-xs text-primary hover:underline">
+            Ver todas
+          </Link>
+        </CardHeader>
+        <CardContent>
+          {loadingNotas ? (
+            <div className="text-sm text-muted-foreground py-6">Carregando…</div>
+          ) : ultimas.length === 0 ? (
+            <div className="text-sm text-muted-foreground py-6">
+              Nenhuma nota lançada ainda. As compras dos eletricistas vão aparecer aqui.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {ultimas.map((n) => (
+                <div key={n.id} className="flex items-center justify-between gap-3 border border-border rounded-lg p-3 flex-wrap">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium truncate">{n.eletricista?.nome ?? "—"}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {n.numero_nota ? `NF ${n.numero_nota} · ` : ""}
+                      {n.data_compra?.split("-").reverse().join("/")}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <div className="text-sm font-semibold">{brl(Number(n.valor))}</div>
+                      <div className="text-xs text-muted-foreground">{n.pontos.toLocaleString("pt-BR")} pts</div>
+                    </div>
+                    <StatusBadge status={NOTA_STATUS_LABEL[n.status] ?? n.status} />
+                  </div>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2"><Trophy className="h-4 w-4" /> Top parceiros</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {mockRanking.slice(0, 5).map((p) => (
-              <div key={p.pos} className="flex items-center gap-3">
-                <span className="h-7 w-7 rounded-full bg-accent text-xs font-semibold flex items-center justify-center">{p.pos}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">{p.name}</div>
-                  <div className="text-xs text-muted-foreground">{p.type}</div>
-                </div>
-                <TierBadge tier={p.tier} className="text-[10px]" />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
-function Kpi({ label, value, icon, delta }: { label: string; value: string; icon: React.ReactNode; delta: string }) {
+function Kpi({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
   return (
     <Card>
       <CardContent className="p-5">
@@ -71,7 +153,6 @@ function Kpi({ label, value, icon, delta }: { label: string; value: string; icon
           <span className="h-7 w-7 rounded-md bg-accent flex items-center justify-center text-primary">{icon}</span>
         </div>
         <div className="text-2xl font-bold mt-3">{value}</div>
-        <div className="text-xs text-success mt-1">{delta}</div>
       </CardContent>
     </Card>
   );

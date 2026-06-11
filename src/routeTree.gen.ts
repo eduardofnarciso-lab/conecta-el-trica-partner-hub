@@ -25,6 +25,7 @@ import { Route as AppAdminRelatoriosRouteImport } from './routes/_app.admin.rela
 import { Route as AppAdminPremiosRouteImport } from './routes/_app.admin.premios'
 import { Route as AppAdminParceirosRouteImport } from './routes/_app.admin.parceiros'
 import { Route as AppAdminNotasRouteImport } from './routes/_app.admin.notas'
+import { Route as AppAdminNiveisRouteImport } from './routes/_app.admin.niveis'
 import { Route as AppAdminComissoesRouteImport } from './routes/_app.admin.comissoes'
 import { Route as AppAdminCampanhasRouteImport } from './routes/_app.admin.campanhas'
 import { Route as AppAdminAprovacoesRouteImport } from './routes/_app.admin.aprovacoes'
@@ -108,6 +109,11 @@ const AppAdminNotasRoute = AppAdminNotasRouteImport.update({
   path: '/notas',
   getParentRoute: () => AppAdminRoute,
 } as any)
+const AppAdminNiveisRoute = AppAdminNiveisRouteImport.update({
+  id: '/niveis',
+  path: '/niveis',
+  getParentRoute: () => AppAdminRoute,
+} as any)
 const AppAdminComissoesRoute = AppAdminComissoesRouteImport.update({
   id: '/comissoes',
   path: '/comissoes',
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/admin/aprovacoes': typeof AppAdminAprovacoesRoute
   '/admin/campanhas': typeof AppAdminCampanhasRoute
   '/admin/comissoes': typeof AppAdminComissoesRoute
+  '/admin/niveis': typeof AppAdminNiveisRoute
   '/admin/notas': typeof AppAdminNotasRoute
   '/admin/parceiros': typeof AppAdminParceirosRoute
   '/admin/premios': typeof AppAdminPremiosRoute
@@ -156,6 +163,7 @@ export interface FileRoutesByTo {
   '/admin/aprovacoes': typeof AppAdminAprovacoesRoute
   '/admin/campanhas': typeof AppAdminCampanhasRoute
   '/admin/comissoes': typeof AppAdminComissoesRoute
+  '/admin/niveis': typeof AppAdminNiveisRoute
   '/admin/notas': typeof AppAdminNotasRoute
   '/admin/parceiros': typeof AppAdminParceirosRoute
   '/admin/premios': typeof AppAdminPremiosRoute
@@ -178,6 +186,7 @@ export interface FileRoutesById {
   '/_app/admin/aprovacoes': typeof AppAdminAprovacoesRoute
   '/_app/admin/campanhas': typeof AppAdminCampanhasRoute
   '/_app/admin/comissoes': typeof AppAdminComissoesRoute
+  '/_app/admin/niveis': typeof AppAdminNiveisRoute
   '/_app/admin/notas': typeof AppAdminNotasRoute
   '/_app/admin/parceiros': typeof AppAdminParceirosRoute
   '/_app/admin/premios': typeof AppAdminPremiosRoute
@@ -200,6 +209,7 @@ export interface FileRouteTypes {
     | '/admin/aprovacoes'
     | '/admin/campanhas'
     | '/admin/comissoes'
+    | '/admin/niveis'
     | '/admin/notas'
     | '/admin/parceiros'
     | '/admin/premios'
@@ -219,6 +229,7 @@ export interface FileRouteTypes {
     | '/admin/aprovacoes'
     | '/admin/campanhas'
     | '/admin/comissoes'
+    | '/admin/niveis'
     | '/admin/notas'
     | '/admin/parceiros'
     | '/admin/premios'
@@ -240,6 +251,7 @@ export interface FileRouteTypes {
     | '/_app/admin/aprovacoes'
     | '/_app/admin/campanhas'
     | '/_app/admin/comissoes'
+    | '/_app/admin/niveis'
     | '/_app/admin/notas'
     | '/_app/admin/parceiros'
     | '/_app/admin/premios'
@@ -367,6 +379,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminNotasRouteImport
       parentRoute: typeof AppAdminRoute
     }
+    '/_app/admin/niveis': {
+      id: '/_app/admin/niveis'
+      path: '/niveis'
+      fullPath: '/admin/niveis'
+      preLoaderRoute: typeof AppAdminNiveisRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
     '/_app/admin/comissoes': {
       id: '/_app/admin/comissoes'
       path: '/comissoes'
@@ -395,6 +414,7 @@ interface AppAdminRouteChildren {
   AppAdminAprovacoesRoute: typeof AppAdminAprovacoesRoute
   AppAdminCampanhasRoute: typeof AppAdminCampanhasRoute
   AppAdminComissoesRoute: typeof AppAdminComissoesRoute
+  AppAdminNiveisRoute: typeof AppAdminNiveisRoute
   AppAdminNotasRoute: typeof AppAdminNotasRoute
   AppAdminParceirosRoute: typeof AppAdminParceirosRoute
   AppAdminPremiosRoute: typeof AppAdminPremiosRoute
@@ -406,6 +426,7 @@ const AppAdminRouteChildren: AppAdminRouteChildren = {
   AppAdminAprovacoesRoute: AppAdminAprovacoesRoute,
   AppAdminCampanhasRoute: AppAdminCampanhasRoute,
   AppAdminComissoesRoute: AppAdminComissoesRoute,
+  AppAdminNiveisRoute: AppAdminNiveisRoute,
   AppAdminNotasRoute: AppAdminNotasRoute,
   AppAdminParceirosRoute: AppAdminParceirosRoute,
   AppAdminPremiosRoute: AppAdminPremiosRoute,

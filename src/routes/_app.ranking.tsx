@@ -5,17 +5,9 @@ import { Trophy, Crown, Gift } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TierBadge } from "@/components/badges";
 import { supabase } from "@/lib/supabase";
-import type { Tier } from "@/components/badges";
-
-const TIER_MINS: { name: Tier; min: number }[] = [
-  { name: "Bronze", min: 0 },
-  { name: "Prata", min: 5000 },
-  { name: "Ouro", min: 10000 },
-  { name: "Diamante", min: 15000 },
-];
-function currentTier(points: number): Tier {
-  let cur: Tier = "Bronze";
-  for (const t of TIER_MINS) if (points >= t.min) cur = t.name;
+function currentTier(points: number, niveis: { nome: string; pontos_min: number }[]): string {
+  let cur = niveis[0]?.nome ?? "Bronze";
+  for (const t of niveis) if (points >= t.pontos_min) cur = t.nome;
   return cur;
 }
 import { cn } from "@/lib/utils";
@@ -47,12 +39,15 @@ async function fetchRanking(): Promise<{ campanha: string | null; rows: RankRow[
   const { data, error } = await query;
   if (error) throw error;
 
+  const { data: niveisData } = await supabase.from("niveis").select("nome, pontos_min").order("ordem");
+  const niveis = niveisData ?? [];
+
   const rows: RankRow[] = (data ?? []).map((r: any) => ({
     pos: Number(r.posicao),
     name: r.nome,
     city: r.cidade,
     points: Number(r.pontos),
-    tier: currentTier(Number(r.pontos)),
+    tier: currentTier(Number(r.pontos), niveis),
     prize: Boolean(r.premiado),
   }));
   return { campanha: camp?.nome ?? null, rows };

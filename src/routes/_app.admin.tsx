@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { BarChart3, Users, Megaphone, Gift, CheckSquare, FileText, Receipt, DollarSign } from "lucide-react";
+import { BarChart3, Users, Megaphone, Gift, CheckSquare, FileText, Receipt, DollarSign, Medal } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/admin")({
@@ -14,6 +14,7 @@ const tabs = [
   { to: "/admin/premios", label: "Prêmios", icon: Gift },
   { to: "/admin/aprovacoes", label: "Aprovação de Pontos", icon: CheckSquare },
   { to: "/admin/comissoes", label: "Comissões", icon: DollarSign },
+  { to: "/admin/niveis", label: "Níveis", icon: Medal },
   { to: "/admin/relatorios", label: "Relatórios", icon: FileText },
 ];
 

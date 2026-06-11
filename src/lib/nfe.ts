@@ -49,6 +49,7 @@ export function parseNfeXml(xml: string): NfeParsed {
 export type CategoriaMatch = {
   id: string;
   nome: string;
+  codigos: string[];
   palavras_chave: string[];
   ncm_prefixos: string[];
   pontos_por_real: number;
@@ -57,6 +58,10 @@ export type CategoriaMatch = {
 export function matchCategoria(item: NfeItem, categorias: CategoriaMatch[]): CategoriaMatch | null {
   const desc = item.descricao.toLowerCase();
   const ncm = (item.ncm || "").replace(/\D/g, "");
+  const codigo = (item.codigo || "").trim().toLowerCase();
+  for (const cat of categorias) {
+    if (codigo && (cat.codigos ?? []).some((c) => c && c.trim().toLowerCase() === codigo)) return cat;
+  }
   for (const cat of categorias) {
     if (ncm && cat.ncm_prefixos.some((p) => p && ncm.startsWith(p))) return cat;
   }

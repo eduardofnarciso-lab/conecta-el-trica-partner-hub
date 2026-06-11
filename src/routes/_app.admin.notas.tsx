@@ -240,7 +240,7 @@ function LancarNotaDialog({ onDone }: { onDone: () => void }) {
 
       const { data: cats, error: catErr } = await supabase
         .from("campanha_categorias")
-        .select("id, nome, palavras_chave, ncm_prefixos, pontos_por_real")
+        .select("id, nome, codigos, palavras_chave, ncm_prefixos, pontos_por_real")
         .eq("campanha_id", camp.id)
         .eq("ativo", true);
       if (catErr) throw catErr;

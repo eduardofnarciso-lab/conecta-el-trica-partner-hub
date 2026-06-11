@@ -147,6 +147,7 @@ type Categoria = {
   id: string;
   campanha_id: string;
   nome: string;
+  codigos: string[];
   palavras_chave: string[];
   ncm_prefixos: string[];
   pontos_por_real: number;
@@ -169,6 +170,7 @@ function CategoriasDialog({ campanha }: { campanha: Campanha }) {
   });
 
   const [nome, setNome] = useState("");
+  const [codigos, setCodigos] = useState("");
   const [palavras, setPalavras] = useState("");
   const [ncm, setNcm] = useState("");
   const [ppr, setPpr] = useState("1");
@@ -187,6 +189,7 @@ function CategoriasDialog({ campanha }: { campanha: Campanha }) {
     const { error } = await supabase.from("campanha_categorias").insert({
       campanha_id: campanha.id,
       nome: nome.trim(),
+      codigos: codigos.split(/[\s,;]+/).map((x) => x.trim()).filter(Boolean),
       palavras_chave: palavras.split(",").map((x) => x.trim().toLowerCase()).filter(Boolean),
       ncm_prefixos: ncm.split(",").map((x) => x.trim().replace(/\D/g, "")).filter(Boolean),
       pontos_por_real: Number(ppr) || 1,
@@ -196,7 +199,7 @@ function CategoriasDialog({ campanha }: { campanha: Campanha }) {
       toast.error("Não foi possível salvar: " + error.message);
       return;
     }
-    setNome(""); setPalavras(""); setNcm(""); setPpr("1");
+    setNome(""); setCodigos(""); setPalavras(""); setNcm(""); setPpr("1");
     toast.success("Categoria adicionada.");
     refresh();
   }
@@ -229,6 +232,9 @@ function CategoriasDialog({ campanha }: { campanha: Campanha }) {
             <div key={cat.id} className="flex items-start justify-between gap-2 rounded-md border border-border p-3">
               <div className="text-sm">
                 <div className="font-medium">{cat.nome} <span className="text-muted-foreground font-normal">· {Number(cat.pontos_por_real).toLocaleString("pt-BR")} pt/R$</span></div>
+                {(cat.codigos ?? []).length > 0 && (
+                  <div className="text-xs text-muted-foreground mt-0.5">Códigos: {cat.codigos.join(", ")}</div>
+                )}
                 {cat.palavras_chave.length > 0 && (
                   <div className="text-xs text-muted-foreground mt-0.5">Palavras: {cat.palavras_chave.join(", ")}</div>
                 )}
@@ -256,7 +262,12 @@ function CategoriasDialog({ campanha }: { campanha: Campanha }) {
           </div>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="cat-palavras">Palavras-chave (separe por vírgula)</Label>
+          <Label htmlFor="cat-codigos">Códigos dos produtos (separe por vírgula ou espaço)</Label>
+          <Input id="cat-codigos" value={codigos} onChange={(e) => setCodigos(e.target.value)} placeholder="9681, 19041, 1276" />
+          <p className="text-xs text-muted-foreground">Match exato pelo código do PDV — forma mais confiável. Tem prioridade sobre NCM e palavras-chave.</p>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="cat-palavras">Palavras-chave (opcional, reserva)</Label>
           <Input id="cat-palavras" value={palavras} onChange={(e) => setPalavras(e.target.value)} placeholder="cabo, fio, cordoalha" />
         </div>
         <div className="space-y-1.5">

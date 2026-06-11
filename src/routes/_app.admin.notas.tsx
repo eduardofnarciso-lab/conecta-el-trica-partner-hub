@@ -477,13 +477,14 @@ function LancarNotaDialog({ onDone }: { onDone: () => void }) {
               <div><div className="text-xs text-muted-foreground">NF</div><div className="font-medium">{nfe.numero || "—"}</div></div>
               <div><div className="text-xs text-muted-foreground">Data</div><div className="font-medium">{nfe.dataEmissao?.split("-").reverse().join("/") || "—"}</div></div>
               <div><div className="text-xs text-muted-foreground">Valor</div><div className="font-medium">{brl(nfe.valorTotal)}</div></div>
-              <div><div className="text-xs text-muted-foreground">Campanha</div><div className="font-medium">{campanha?.nome ?? "Nenhuma"}</div></div>
+              <div><div className="text-xs text-muted-foreground">Campanha</div><div className={"font-medium " + (campanha ? "" : "text-destructive")}>{campanha?.nome ?? "Nenhuma — não pontua!"}</div></div>
             </div>
 
             <div className="overflow-x-auto rounded-md border border-border">
               <table className="w-full text-sm">
                 <thead className="text-left text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
                   <tr>
+                    <th className="py-2 px-3">Código</th>
                     <th className="py-2 px-3">Item</th>
                     <th className="py-2 px-3 hidden sm:table-cell">NCM</th>
                     <th className="py-2 px-3 text-right">Valor</th>
@@ -494,6 +495,7 @@ function LancarNotaDialog({ onDone }: { onDone: () => void }) {
                 <tbody>
                   {itens.map((i, idx) => (
                     <tr key={idx} className={"border-b border-border last:border-0 " + (i.categoria ? "" : "opacity-60")}>
+                      <td className="py-2 px-3 font-mono text-xs">{i.codigo || "—"}</td>
                       <td className="py-2 px-3">{i.descricao}</td>
                       <td className="py-2 px-3 hidden sm:table-cell text-muted-foreground">{i.ncm || "—"}</td>
                       <td className="py-2 px-3 text-right">{brl(i.valor)}</td>

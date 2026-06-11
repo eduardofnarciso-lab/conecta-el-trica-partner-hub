@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/badges";
 import { supabase } from "@/lib/supabase";
-import { Plus, Star } from "lucide-react";
+import { Plus, Star, Tags, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/admin/campanhas")({
@@ -72,6 +72,7 @@ function AdminCampaigns() {
     queryFn: fetchCampanhas,
   });
   const [open, setOpen] = useState(false);
+  const [catCampanha, setCatCampanha] = useState<Campanha | null>(null);
 
   return (
     <Card>
@@ -109,6 +110,7 @@ function AdminCampaigns() {
                   <th className="py-3 pr-3">Status</th>
                   <th className="py-3 pr-3 text-right">Premiação</th>
                   <th className="py-3 pr-3 text-center">Destaque</th>
+                  <th className="py-3 pr-3 text-right">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -121,6 +123,11 @@ function AdminCampaigns() {
                     <td className="py-3 pr-3 text-center">
                       {c.destaque && <Star className="h-4 w-4 text-energy inline" aria-label="Em destaque" />}
                     </td>
+                    <td className="py-3 pr-3 text-right">
+                      <Button size="sm" variant="outline" onClick={() => setCatCampanha(c)}>
+                        <Tags className="h-4 w-4 mr-1" /> Categorias
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -128,7 +135,140 @@ function AdminCampaigns() {
           </div>
         )}
       </CardContent>
+
+      <Dialog open={!!catCampanha} onOpenChange={(o) => !o && setCatCampanha(null)}>
+        {catCampanha && <CategoriasDialog campanha={catCampanha} />}
+      </Dialog>
     </Card>
+  );
+}
+
+type Categoria = {
+  id: string;
+  campanha_id: string;
+  nome: string;
+  palavras_chave: string[];
+  ncm_prefixos: string[];
+  pontos_por_real: number;
+  ativo: boolean;
+};
+
+function CategoriasDialog({ campanha }: { campanha: Campanha }) {
+  const queryClient = useQueryClient();
+  const { data: categorias = [], isLoading } = useQuery({
+    queryKey: ["campanha-categorias", campanha.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("campanha_categorias")
+        .select("*")
+        .eq("campanha_id", campanha.id)
+        .order("nome");
+      if (error) throw error;
+      return (data ?? []) as Categoria[];
+    },
+  });
+
+  const [nome, setNome] = useState("");
+  const [palavras, setPalavras] = useState("");
+  const [ncm, setNcm] = useState("");
+  const [ppr, setPpr] = useState("1");
+  const [saving, setSaving] = useState(false);
+
+  const refresh = () =>
+    queryClient.invalidateQueries({ queryKey: ["campanha-categorias", campanha.id] });
+
+  async function addCategoria(e: React.FormEvent) {
+    e.preventDefault();
+    if (!nome.trim()) {
+      toast.error("Dê um nome à categoria.");
+      return;
+    }
+    setSaving(true);
+    const { error } = await supabase.from("campanha_categorias").insert({
+      campanha_id: campanha.id,
+      nome: nome.trim(),
+      palavras_chave: palavras.split(",").map((x) => x.trim().toLowerCase()).filter(Boolean),
+      ncm_prefixos: ncm.split(",").map((x) => x.trim().replace(/\D/g, "")).filter(Boolean),
+      pontos_por_real: Number(ppr) || 1,
+    });
+    setSaving(false);
+    if (error) {
+      toast.error("Não foi possível salvar: " + error.message);
+      return;
+    }
+    setNome(""); setPalavras(""); setNcm(""); setPpr("1");
+    toast.success("Categoria adicionada.");
+    refresh();
+  }
+
+  async function removeCategoria(cat: Categoria) {
+    const { error } = await supabase.from("campanha_categorias").delete().eq("id", cat.id);
+    if (error) {
+      toast.error("Não foi possível remover: " + error.message);
+      return;
+    }
+    toast.success(`Categoria ${cat.nome} removida.`);
+    refresh();
+  }
+
+  return (
+    <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle>Categorias que pontuam — {campanha.nome}</DialogTitle>
+      </DialogHeader>
+
+      <div className="space-y-2">
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Carregando…</p>
+        ) : categorias.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Nenhuma categoria ainda. Itens da nota só pontuam se baterem com uma categoria cadastrada aqui.
+          </p>
+        ) : (
+          categorias.map((cat) => (
+            <div key={cat.id} className="flex items-start justify-between gap-2 rounded-md border border-border p-3">
+              <div className="text-sm">
+                <div className="font-medium">{cat.nome} <span className="text-muted-foreground font-normal">· {Number(cat.pontos_por_real).toLocaleString("pt-BR")} pt/R$</span></div>
+                {cat.palavras_chave.length > 0 && (
+                  <div className="text-xs text-muted-foreground mt-0.5">Palavras: {cat.palavras_chave.join(", ")}</div>
+                )}
+                {cat.ncm_prefixos.length > 0 && (
+                  <div className="text-xs text-muted-foreground mt-0.5">NCM: {cat.ncm_prefixos.join(", ")}</div>
+                )}
+              </div>
+              <Button size="icon" variant="ghost" title="Remover" onClick={() => removeCategoria(cat)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))
+        )}
+      </div>
+
+      <form onSubmit={addCategoria} className="space-y-3 border-t border-border pt-4">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="cat-nome">Categoria *</Label>
+            <Input id="cat-nome" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Cabos" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="cat-ppr">Pontos por R$ 1,00</Label>
+            <Input id="cat-ppr" type="number" step="0.01" min={0} value={ppr} onChange={(e) => setPpr(e.target.value)} />
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="cat-palavras">Palavras-chave (separe por vírgula)</Label>
+          <Input id="cat-palavras" value={palavras} onChange={(e) => setPalavras(e.target.value)} placeholder="cabo, fio, cordoalha" />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="cat-ncm">Prefixos NCM (separe por vírgula, opcional)</Label>
+          <Input id="cat-ncm" value={ncm} onChange={(e) => setNcm(e.target.value)} placeholder="8544, 7413" />
+          <p className="text-xs text-muted-foreground">O item pontua se o NCM do XML começar com um prefixo ou a descrição contiver uma palavra-chave.</p>
+        </div>
+        <DialogFooter>
+          <Button type="submit" disabled={saving}>{saving ? "Salvando…" : "Adicionar categoria"}</Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
   );
 }
 

@@ -16,7 +16,7 @@ import {
 import { StatusBadge } from "@/components/badges";
 import { supabase } from "@/lib/supabase";
 import { parseNfeXml, parseOrcamentoTexto, matchCategoria, type NfeParsed, type NfeItem, type CategoriaMatch } from "@/lib/nfe";
-import { Plus, Search, CheckCircle2, XCircle, FileUp, Zap, ClipboardList, FileCode2 } from "lucide-react";
+import { Plus, Search, CheckCircle2, XCircle, FileUp, Zap, ClipboardList, FileCode2, Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/admin/notas")({
@@ -200,6 +200,7 @@ function LancarNotaDialog({ onDone }: { onDone: () => void }) {
   const [itens, setItens] = useState<ItemPreview[]>([]);
   const [saving, setSaving] = useState(false);
   const [textoOrc, setTextoOrc] = useState("");
+  const [lendoFoto, setLendoFoto] = useState(false);
   const [numeroManual, setNumeroManual] = useState("");
   const [dataManual, setDataManual] = useState(new Date().toISOString().slice(0, 10));
 
@@ -275,6 +276,22 @@ function LancarNotaDialog({ onDone }: { onDone: () => void }) {
       toast.error(err instanceof Error ? err.message : "Falha ao ler o XML.");
       setNfe(null);
       setItens([]);
+    }
+  }
+
+  async function handleFoto(file: File) {
+    setLendoFoto(true);
+    try {
+      const Tesseract = await import("tesseract.js");
+      const { data } = await Tesseract.recognize(file, "por");
+      const texto = (data.text ?? "").trim();
+      if (!texto) throw new Error("Não consegui ler texto na foto. Tente uma foto mais nítida e reta.");
+      setTextoOrc(texto);
+      toast.success("Foto lida! Confira o texto abaixo e clique em Interpretar.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Falha ao ler a foto.");
+    } finally {
+      setLendoFoto(false);
     }
   }
 
@@ -413,7 +430,26 @@ function LancarNotaDialog({ onDone }: { onDone: () => void }) {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="texto-orc">Itens do orçamento (cole o texto)</Label>
+              <Label>Foto do orçamento</Label>
+              <label className="flex items-center gap-3 rounded-md border border-dashed border-border px-4 py-5 cursor-pointer hover:bg-muted/50 transition-colors">
+                {lendoFoto
+                  ? <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
+                  : <Camera className="h-5 w-5 text-muted-foreground" />}
+                <span className="text-sm text-muted-foreground">
+                  {lendoFoto ? "Lendo a foto… isso pode levar alguns segundos" : "Clique para enviar a foto do orçamento (ou tire na hora pelo celular)"}
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  disabled={lendoFoto}
+                  onChange={(e) => e.target.files?.[0] && handleFoto(e.target.files[0])}
+                />
+              </label>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="texto-orc">Itens do orçamento (lidos da foto — confira e corrija se precisar)</Label>
               <textarea
                 id="texto-orc"
                 value={textoOrc}

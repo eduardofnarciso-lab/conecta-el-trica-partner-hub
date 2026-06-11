@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/badges";
 import { supabase } from "@/lib/supabase";
-import { Plus, Star, Tags, Trash2 } from "lucide-react";
+import { Plus, Star, Tags, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/admin/campanhas")({
@@ -73,6 +73,7 @@ function AdminCampaigns() {
   });
   const [open, setOpen] = useState(false);
   const [catCampanha, setCatCampanha] = useState<Campanha | null>(null);
+  const [editCampanha, setEditCampanha] = useState<Campanha | null>(null);
 
   return (
     <Card>
@@ -124,9 +125,14 @@ function AdminCampaigns() {
                       {c.destaque && <Star className="h-4 w-4 text-energy inline" aria-label="Em destaque" />}
                     </td>
                     <td className="py-3 pr-3 text-right">
-                      <Button size="sm" variant="outline" onClick={() => setCatCampanha(c)}>
-                        <Tags className="h-4 w-4 mr-1" /> Categorias
-                      </Button>
+                      <div className="flex gap-1 justify-end">
+                        <Button size="sm" variant="outline" onClick={() => setEditCampanha(c)}>
+                          <Pencil className="h-4 w-4 mr-1" /> Editar
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setCatCampanha(c)}>
+                          <Tags className="h-4 w-4 mr-1" /> Categorias
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -139,7 +145,115 @@ function AdminCampaigns() {
       <Dialog open={!!catCampanha} onOpenChange={(o) => !o && setCatCampanha(null)}>
         {catCampanha && <CategoriasDialog campanha={catCampanha} />}
       </Dialog>
+      <Dialog open={!!editCampanha} onOpenChange={(o) => !o && setEditCampanha(null)}>
+        {editCampanha && (
+          <EditarCampanhaDialog
+            campanha={editCampanha}
+            onSaved={() => {
+              setEditCampanha(null);
+              queryClient.invalidateQueries({ queryKey: ["admin-campanhas"] });
+              queryClient.invalidateQueries({ queryKey: ["campanhas-publicas"] });
+            }}
+          />
+        )}
+      </Dialog>
     </Card>
+  );
+}
+
+function EditarCampanhaDialog({ campanha, onSaved }: { campanha: Campanha; onSaved: () => void }) {
+  const [nome, setNome] = useState(campanha.nome);
+  const [descricao, setDescricao] = useState(campanha.descricao ?? "");
+  const [dataInicio, setDataInicio] = useState(campanha.data_inicio ?? "");
+  const [dataFim, setDataFim] = useState(campanha.data_fim ?? "");
+  const [status, setStatus] = useState(campanha.status);
+  const [premiacaoTop, setPremiacaoTop] = useState(String(campanha.premiacao_top));
+  const [destaque, setDestaque] = useState(campanha.destaque);
+  const [saving, setSaving] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!nome.trim()) {
+      toast.error("Dê um nome à campanha.");
+      return;
+    }
+    setSaving(true);
+    const { error } = await supabase
+      .from("campanhas")
+      .update({
+        nome: nome.trim(),
+        descricao: descricao.trim() || null,
+        data_inicio: dataInicio || null,
+        data_fim: dataFim || null,
+        status,
+        destaque,
+        premiacao_top: Number(premiacaoTop) || 10,
+      })
+      .eq("id", campanha.id);
+    setSaving(false);
+    if (error) {
+      toast.error("Não foi possível salvar: " + error.message);
+      return;
+    }
+    toast.success("Campanha atualizada.");
+    onSaved();
+  }
+
+  return (
+    <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle>Editar campanha</DialogTitle>
+      </DialogHeader>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="ed-nome">Nome *</Label>
+          <Input id="ed-nome" value={nome} onChange={(e) => setNome(e.target.value)} required />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="ed-desc">Descrição</Label>
+          <Textarea id="ed-desc" value={descricao} onChange={(e) => setDescricao(e.target.value)} />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="ed-ini">Início</Label>
+            <Input id="ed-ini" type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="ed-fim">Fim</Label>
+            <Input id="ed-fim" type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="ed-status">Status</Label>
+            <select
+              id="ed-status"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+            >
+              <option value="rascunho">Rascunho</option>
+              <option value="agendada">Em breve</option>
+              <option value="ativa">Ativa</option>
+              <option value="encerrada">Encerrada</option>
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="ed-top">Premiar top</Label>
+            <Input id="ed-top" type="number" min={1} value={premiacaoTop} onChange={(e) => setPremiacaoTop(e.target.value)} />
+          </div>
+        </div>
+        <div className="flex items-center justify-between rounded-md border border-border px-3 py-2">
+          <Label htmlFor="ed-destaque" className="cursor-pointer">Campanha em destaque</Label>
+          <Switch id="ed-destaque" checked={destaque} onCheckedChange={setDestaque} />
+        </div>
+        <DialogFooter>
+          <Button type="submit" disabled={saving} className="w-full sm:w-auto">
+            {saving ? "Salvando…" : "Salvar alterações"}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
   );
 }
 

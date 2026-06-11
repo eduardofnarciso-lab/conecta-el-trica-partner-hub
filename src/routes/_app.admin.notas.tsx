@@ -15,8 +15,8 @@ import {
 } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/badges";
 import { supabase } from "@/lib/supabase";
-import { parseNfeXml, matchCategoria, type NfeParsed, type CategoriaMatch } from "@/lib/nfe";
-import { Plus, Search, CheckCircle2, XCircle, FileUp, Zap } from "lucide-react";
+import { parseNfeXml, parseOrcamentoTexto, matchCategoria, type NfeParsed, type NfeItem, type CategoriaMatch } from "@/lib/nfe";
+import { Plus, Search, CheckCircle2, XCircle, FileUp, Zap, ClipboardList, FileCode2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/admin/notas")({
@@ -192,12 +192,16 @@ type ItemPreview = {
 };
 
 function LancarNotaDialog({ onDone }: { onDone: () => void }) {
+  const [modo, setModo] = useState<"orcamento" | "xml">("orcamento");
   const [eletricistaId, setEletricistaId] = useState("");
   const [nfe, setNfe] = useState<NfeParsed | null>(null);
   const [fileName, setFileName] = useState("");
   const [campanha, setCampanha] = useState<Campanha | null>(null);
   const [itens, setItens] = useState<ItemPreview[]>([]);
   const [saving, setSaving] = useState(false);
+  const [textoOrc, setTextoOrc] = useState("");
+  const [numeroManual, setNumeroManual] = useState("");
+  const [dataManual, setDataManual] = useState(new Date().toISOString().slice(0, 10));
 
   const { data: eletricistas = [] } = useQuery({
     queryKey: ["eletricistas-select"],
@@ -212,12 +216,9 @@ function LancarNotaDialog({ onDone }: { onDone: () => void }) {
     },
   });
 
-  async function handleFile(file: File) {
+  async function processParsed(parsed: NfeParsed) {
+    setNfe(parsed);
     try {
-      const parsed = parseNfeXml(await file.text());
-      setFileName(file.name);
-      setNfe(parsed);
-
       const dataCompra = parsed.dataEmissao || new Date().toISOString().slice(0, 10);
       const { data: campanhas, error } = await supabase
         .from("campanhas")
@@ -259,10 +260,39 @@ function LancarNotaDialog({ onDone }: { onDone: () => void }) {
         toast.warning(`A campanha “${camp.nome}” não tem categorias cadastradas — nenhum item vai pontuar.`);
       }
     } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Falha ao processar os itens.");
+      setNfe(null);
+      setItens([]);
+    }
+  }
+
+  async function handleFile(file: File) {
+    try {
+      const parsed = parseNfeXml(await file.text());
+      setFileName(file.name);
+      await processParsed(parsed);
+    } catch (err) {
       toast.error(err instanceof Error ? err.message : "Falha ao ler o XML.");
       setNfe(null);
       setItens([]);
     }
+  }
+
+  async function handleOrcamento() {
+    const lidos: NfeItem[] = parseOrcamentoTexto(textoOrc);
+    if (lidos.length === 0) {
+      toast.error("Não consegui interpretar nenhum item. Cole as linhas dos itens do orçamento.");
+      return;
+    }
+    await processParsed({
+      numero: numeroManual.trim(),
+      dataEmissao: dataManual,
+      valorTotal: lidos.reduce((sum, i) => sum + i.valor, 0),
+      emitente: "Elettro Ponto",
+      destinatario: "",
+      itens: lidos,
+    });
+    toast.success(`${lidos.length} itens interpretados.`);
   }
 
   const totalPontos = itens.reduce((s, i) => s + i.pontos, 0);
@@ -344,22 +374,61 @@ function LancarNotaDialog({ onDone }: { onDone: () => void }) {
           </select>
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="xml">XML da NF-e *</Label>
-          <label className="flex items-center gap-3 rounded-md border border-dashed border-border px-4 py-6 cursor-pointer hover:bg-muted/50 transition-colors">
-            <FileUp className="h-5 w-5 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">
-              {fileName || "Clique para escolher o arquivo .xml da nota"}
-            </span>
-            <input
-              id="xml"
-              type="file"
-              accept=".xml,text/xml"
-              className="hidden"
-              onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-            />
-          </label>
+        <div className="flex gap-2">
+          <Button type="button" size="sm" variant={modo === "orcamento" ? "default" : "outline"} onClick={() => setModo("orcamento")}>
+            <ClipboardList className="h-4 w-4 mr-1" /> Orçamento / cupom
+          </Button>
+          <Button type="button" size="sm" variant={modo === "xml" ? "default" : "outline"} onClick={() => setModo("xml")}>
+            <FileCode2 className="h-4 w-4 mr-1" /> XML da NF-e
+          </Button>
         </div>
+
+        {modo === "xml" ? (
+          <div className="space-y-1.5">
+            <Label htmlFor="xml">XML da NF-e *</Label>
+            <label className="flex items-center gap-3 rounded-md border border-dashed border-border px-4 py-6 cursor-pointer hover:bg-muted/50 transition-colors">
+              <FileUp className="h-5 w-5 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                {fileName || "Clique para escolher o arquivo .xml da nota"}
+              </span>
+              <input
+                id="xml"
+                type="file"
+                accept=".xml,text/xml"
+                className="hidden"
+                onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+              />
+            </label>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="num-orc">Número (DAV/orçamento)</Label>
+                <Input id="num-orc" value={numeroManual} onChange={(e) => setNumeroManual(e.target.value)} placeholder="20086069" />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="data-orc">Data da compra</Label>
+                <Input id="data-orc" type="date" value={dataManual} onChange={(e) => setDataManual(e.target.value)} />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="texto-orc">Itens do orçamento (cole o texto)</Label>
+              <textarea
+                id="texto-orc"
+                value={textoOrc}
+                onChange={(e) => setTextoOrc(e.target.value)}
+                rows={6}
+                placeholder={"9681 3,000 UN LED TRILHO PT BARRA 2,0 MTS 28,050 84,15\n1276 30,000 MT CABO PP 500V 2X1,0MM 3,220 96,60"}
+                className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm font-mono"
+              />
+              <p className="text-xs text-muted-foreground">Uma linha por item: código, quantidade, unidade, descrição, valor unitário e total.</p>
+            </div>
+            <Button type="button" variant="secondary" onClick={handleOrcamento}>
+              Interpretar itens e calcular pontos
+            </Button>
+          </div>
+        )}
 
         {nfe && (
           <>

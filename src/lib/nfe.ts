@@ -65,3 +65,28 @@ export function matchCategoria(item: NfeItem, categorias: CategoriaMatch[]): Cat
   }
   return null;
 }
+
+function brNum(s: string): number {
+  return Number(s.replace(/\./g, "").replace(",", ".")) || 0;
+}
+
+// Interpreta texto de orçamento/cupom (formato do PDV Elettro Ponto):
+// "9681 [ ][ ] 3,000 UN LED TRILHO PT BARRA 2,0 MTS 28,050 84,15"
+export function parseOrcamentoTexto(texto: string): NfeItem[] {
+  const itens: NfeItem[] = [];
+  for (const raw of texto.split("\n")) {
+    const line = raw.replace(/\[[^\]]*\]/g, " ").replace(/\s+/g, " ").trim();
+    if (!line || /^[-=*.]+$/.test(line)) continue;
+    const m = line.match(/^(\d+)?\s*([\d.,]+)\s+(UN|MT|MTS|PC|PÇ|CX|M|KG|RL|PCT)\s+(.+?)\s+([\d.,]+)\s+([\d.,]+)$/i);
+    if (m) {
+      itens.push({
+        codigo: m[1] ?? "",
+        descricao: m[4].trim(),
+        ncm: "",
+        quantidade: brNum(m[2]),
+        valor: brNum(m[6]),
+      });
+    }
+  }
+  return itens;
+}

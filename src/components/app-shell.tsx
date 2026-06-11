@@ -19,16 +19,16 @@ import { useAuth, roleLabel } from "@/lib/auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
-type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
+type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean; staffOnly?: boolean };
 const nav: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/campanhas", label: "Campanhas", icon: Megaphone },
   { to: "/ranking", label: "Ranking", icon: Trophy },
   { to: "/extrato", label: "Extrato de Pontos", icon: Receipt },
   { to: "/loja", label: "Loja de Prêmios", icon: Gift },
-  { to: "/indicacoes", label: "Indicações", icon: UserPlus },
+  { to: "/indicacoes", label: "Indicações", icon: UserPlus, staffOnly: true },
   { to: "/perfil", label: "Meu Perfil", icon: User },
-  { to: "/admin", label: "Administração", icon: ShieldCheck },
+  { to: "/admin", label: "Administração", icon: ShieldCheck, staffOnly: true },
 ];
 
 function Brand() {
@@ -40,9 +40,11 @@ function Brand() {
 }
 
 function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+  const { isStaff } = useAuth();
+  const items = nav.filter((i) => !i.staffOnly || isStaff);
   return (
     <nav className="flex flex-col gap-0.5 px-2">
-      {nav.map((item) => {
+      {items.map((item) => {
         const active = item.exact ? pathname === item.to : pathname.startsWith(item.to);
         const Icon = item.icon;
         return (
@@ -161,7 +163,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Mobile bottom nav */}
         <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-card border-t border-border flex justify-around py-2">
-          {nav.slice(0, 5).map((item) => {
+          {nav.filter((i) => !i.staffOnly).slice(0, 5).map((item) => {
             const active = item.exact ? pathname === item.to : pathname.startsWith(item.to);
             const Icon = item.icon;
             return (

@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { BarChart3, Users, Megaphone, Gift, CheckSquare, FileText, Receipt, DollarSign, Medal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/_app/admin")({
   component: AdminLayout,
@@ -20,6 +21,22 @@ const tabs = [
 
 function AdminLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { loading, isStaff } = useAuth();
+
+  if (loading) {
+    return <div className="p-8 text-center text-muted-foreground">Carregando…</div>;
+  }
+  if (!isStaff) {
+    return (
+      <div className="p-8 text-center space-y-3">
+        <p className="text-lg font-semibold">Acesso restrito</p>
+        <p className="text-sm text-muted-foreground">
+          Esta área é exclusiva da administração. Fale com a Elettro Ponto se você acha que isso é um engano.
+        </p>
+        <Link to="/" className="text-primary text-sm underline">Voltar ao dashboard</Link>
+      </div>
+    );
+  }
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       <div>

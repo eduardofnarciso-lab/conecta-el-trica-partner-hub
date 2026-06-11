@@ -75,6 +75,26 @@ function AdminCampaigns() {
   const [catCampanha, setCatCampanha] = useState<Campanha | null>(null);
   const [editCampanha, setEditCampanha] = useState<Campanha | null>(null);
 
+  async function excluirCampanha(c: Campanha) {
+    const { count } = await supabase
+      .from("notas")
+      .select("id", { count: "exact", head: true })
+      .eq("campanha_id", c.id);
+    const aviso =
+      count && count > 0
+        ? `A campanha "${c.nome}" tem ${count} nota(s) vinculada(s). Elas NÃO serão apagadas, mas ficarão sem campanha (e fora do ranking dela). Excluir mesmo assim?`
+        : `Excluir a campanha "${c.nome}"? As categorias cadastradas nela também serão removidas.`;
+    if (!window.confirm(aviso)) return;
+    const { error } = await supabase.from("campanhas").delete().eq("id", c.id);
+    if (error) {
+      toast.error("Não foi possível excluir: " + error.message);
+      return;
+    }
+    toast.success(`Campanha "${c.nome}" excluída.`);
+    queryClient.invalidateQueries({ queryKey: ["admin-campanhas"] });
+    queryClient.invalidateQueries({ queryKey: ["campanhas-publicas"] });
+  }
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -131,6 +151,9 @@ function AdminCampaigns() {
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => setCatCampanha(c)}>
                           <Tags className="h-4 w-4 mr-1" /> Categorias
+                        </Button>
+                        <Button size="icon" variant="ghost" title="Excluir campanha" onClick={() => excluirCampanha(c)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
                     </td>

@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Users, Zap, Clock, Megaphone, Receipt, FileClock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/badges";
@@ -40,7 +41,20 @@ type UltimaNota = {
   eletricista: { nome: string } | null;
 };
 
-async function fetchOverview(): Promise<Overview> {
+function aplicaCampanha(query: any, campanhaId: string, coluna = "campanha_id") {
+  return campanhaId ? query.eq(coluna, campanhaId) : query;
+}
+
+async function fetchCampanhasFiltro(): Promise<{ id: string; nome: string }[]> {
+  const { data, error } = await supabase
+    .from("campanhas")
+    .select("id, nome")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+async function fetchOverview(campanhaId: string): Promise<Overview> {
   const now = new Date();
   const inicioMesISO = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
   const inicioMesData = inicioMesISO.slice(0, 10);
@@ -48,22 +62,32 @@ async function fetchOverview(): Promise<Overview> {
   const [eletricistas, campanhas, notasAnalise, transacoes, notasMes, resgates, aprovadas, recusadas] = await Promise.all([
     supabase.from("eletricistas").select("id", { count: "exact", head: true }).eq("status", "ativo"),
     supabase.from("campanhas").select("id", { count: "exact", head: true }).eq("status", "ativa"),
-    supabase.from("notas").select("id", { count: "exact", head: true }).eq("status", "em_analise"),
-    supabase
-      .from("transacoes_pontos")
-      .select("pontos")
-      .eq("tipo", "ganho")
-      .eq("status", "confirmado")
-      .gte("created_at", inicioMesISO),
-    supabase
-      .from("nota_itens")
-      .select("valor, nota:notas!inner(status, data_compra)")
-      .eq("elegivel", true)
-      .eq("nota.status", "confirmada")
-      .gte("nota.data_compra", inicioMesData),
+    aplicaCampanha(
+      supabase.from("notas").select("id", { count: "exact", head: true }).eq("status", "em_analise"),
+      campanhaId,
+    ),
+    aplicaCampanha(
+      supabase
+        .from("transacoes_pontos")
+        .select("pontos")
+        .eq("tipo", "ganho")
+        .eq("status", "confirmado")
+        .gte("created_at", inicioMesISO),
+      campanhaId,
+    ),
+    aplicaCampanha(
+      supabase
+        .from("nota_itens")
+        .select("valor, nota:notas!inner(status, data_compra, campanha_id)")
+        .eq("elegivel", true)
+        .eq("nota.status", "confirmada")
+        .gte("nota.data_compra", inicioMesData),
+      campanhaId,
+      "nota.campanha_id",
+    ),
     supabase.from("resgates").select("id", { count: "exact", head: true }).eq("status", "solicitado"),
-    supabase.from("notas").select("id", { count: "exact", head: true }).eq("status", "confirmada"),
-    supabase.from("notas").select("id", { count: "exact", head: true }).eq("status", "reprovada"),
+    aplicaCampanha(supabase.from("notas").select("id", { count: "exact", head: true }).eq("status", "confirmada"), campanhaId),
+    aplicaCampanha(supabase.from("notas").select("id", { count: "exact", head: true }).eq("status", "reprovada"), campanhaId),
   ]);
 
   for (const r of [eletricistas, campanhas, notasAnalise, transacoes, notasMes, resgates, aprovadas, recusadas]) {
@@ -82,21 +106,31 @@ async function fetchOverview(): Promise<Overview> {
   };
 }
 
-async function fetchUltimasNotas(): Promise<UltimaNota[]> {
-  const { data, error } = await supabase
+async function fetchUltimasNotas(campanhaId: string): Promise<UltimaNota[]> {
+  let q = supabase
     .from("notas")
     .select("id, numero_nota, valor, pontos, status, data_compra, eletricista:eletricistas(nome)")
     .order("created_at", { ascending: false })
     .limit(5);
+  if (campanhaId) q = q.eq("campanha_id", campanhaId);
+  const { data, error } = await q;
   if (error) throw error;
   return (data ?? []) as unknown as UltimaNota[];
 }
 
 function AdminOverview() {
-  const { data: ov, isLoading } = useQuery({ queryKey: ["admin-overview"], queryFn: fetchOverview });
+  const [campFiltro, setCampFiltro] = useState("");
+  const { data: campanhas = [] } = useQuery({
+    queryKey: ["admin-campanhas-filtro"],
+    queryFn: fetchCampanhasFiltro,
+  });
+  const { data: ov, isLoading } = useQuery({
+    queryKey: ["admin-overview", campFiltro],
+    queryFn: () => fetchOverview(campFiltro),
+  });
   const { data: ultimas = [], isLoading: loadingNotas } = useQuery({
-    queryKey: ["admin-ultimas-notas"],
-    queryFn: fetchUltimasNotas,
+    queryKey: ["admin-ultimas-notas", campFiltro],
+    queryFn: () => fetchUltimasNotas(campFiltro),
   });
 
   const fmt = (v: number | undefined, f?: (n: number) => string) =>
@@ -104,6 +138,18 @@ function AdminOverview() {
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-end">
+        <select
+          value={campFiltro}
+          onChange={(e) => setCampFiltro(e.target.value)}
+          className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+        >
+          <option value="">Todas as campanhas</option>
+          {campanhas.map((c) => (
+            <option key={c.id} value={c.id}>{c.nome}</option>
+          ))}
+        </select>
+      </div>
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <Kpi label="Eletricistas ativos" value={fmt(ov?.eletricistasAtivos)} icon={<Users className="h-4 w-4" />} />
         <Kpi label="Campanhas ativas" value={fmt(ov?.campanhasAtivas)} icon={<Megaphone className="h-4 w-4" />} />

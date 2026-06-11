@@ -25,18 +25,23 @@ type RankRow = {
   prize: boolean;
 };
 
-async function fetchRanking(): Promise<{ campanha: string | null; rows: RankRow[] }> {
-  const { data: camp } = await supabase
+async function fetchCampanhasAtivas(): Promise<{ id: string; nome: string; destaque: boolean }[]> {
+  const { data, error } = await supabase
     .from("campanhas")
-    .select("id,nome")
+    .select("id,nome,destaque")
     .eq("status", "ativa")
-    .order("data_inicio", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order("destaque", { ascending: false })
+    .order("data_inicio", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
 
-  let query = supabase.from("vw_ranking").select("*").order("posicao", { ascending: true });
-  if (camp?.id) query = query.eq("campanha_id", camp.id);
-  const { data, error } = await query;
+async function fetchRanking(campanhaId: string): Promise<{ rows: RankRow[] }> {
+  const { data, error } = await supabase
+    .from("vw_ranking")
+    .select("*")
+    .eq("campanha_id", campanhaId)
+    .order("posicao", { ascending: true });
   if (error) throw error;
 
   const { data: niveisData } = await supabase.from("niveis").select("nome, pontos_min").order("ordem");
@@ -50,11 +55,23 @@ async function fetchRanking(): Promise<{ campanha: string | null; rows: RankRow[
     tier: currentTier(Number(r.pontos), niveis),
     prize: Boolean(r.premiado),
   }));
-  return { campanha: camp?.nome ?? null, rows };
+  return { rows };
 }
 
 function RankingPage() {
-  const { data, isLoading } = useQuery({ queryKey: ["ranking"], queryFn: fetchRanking });
+  const { data: campanhas = [] } = useQuery({
+    queryKey: ["campanhas-ativas-ranking"],
+    queryFn: fetchCampanhasAtivas,
+  });
+  const [campSel, setCampSel] = useState<string>("");
+  const campanhaId = campSel || campanhas[0]?.id || "";
+  const campanhaNome = campanhas.find((c) => c.id === campanhaId)?.nome ?? null;
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["ranking", campanhaId],
+    queryFn: () => fetchRanking(campanhaId),
+    enabled: !!campanhaId,
+  });
   const rows = data?.rows ?? [];
 
   return (
@@ -62,12 +79,26 @@ function RankingPage() {
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Ranking de eletricistas</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          {data?.campanha ? `Campanha ${data.campanha} · ` : ""}
+          {campanhaNome ? `Campanha ${campanhaNome} · ` : ""}
           os <span className="font-medium text-foreground">10 primeiros</span> são premiados ao fim da campanha.
         </p>
       </div>
 
-      {isLoading ? (
+      {campanhas.length > 1 && (
+        <select
+          value={campanhaId}
+          onChange={(e) => setCampSel(e.target.value)}
+          className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+        >
+          {campanhas.map((c) => (
+            <option key={c.id} value={c.id}>{c.nome}</option>
+          ))}
+        </select>
+      )}
+
+      {campanhas.length === 0 ? (
+        <div className="text-sm text-muted-foreground">Nenhuma campanha ativa no momento.</div>
+      ) : isLoading ? (
         <div className="text-sm text-muted-foreground">Carregando ranking…</div>
       ) : rows.length === 0 ? (
         <div className="text-sm text-muted-foreground">Nenhuma pontuação registrada ainda.</div>

@@ -58,16 +58,30 @@ async function fetchNotas(): Promise<Nota[]> {
 function AdminNotas() {
   const queryClient = useQueryClient();
   const { data: notas = [], isLoading } = useQuery({ queryKey: ["admin-notas"], queryFn: fetchNotas });
+  const { data: valorCampanha = 0 } = useQuery({
+    queryKey: ["admin-notas-valor-campanha"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("nota_itens")
+        .select("valor, nota:notas!inner(status)")
+        .eq("elegivel", true)
+        .eq("nota.status", "confirmada");
+      if (error) throw error;
+      return (data ?? []).reduce((s, i) => s + Number(i.valor ?? 0), 0);
+    },
+  });
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
 
   const list = notas.filter((n) =>
     (n.eletricista?.nome ?? "").toLowerCase().includes(q.toLowerCase()),
   );
-  const totalValue = list.reduce((s, n) => s + (n.status === "confirmada" ? Number(n.valor) : 0), 0);
-  const totalPoints = list.reduce((s, n) => s + (n.status === "confirmada" ? n.pontos : 0), 0);
+    const totalPoints = list.reduce((s, n) => s + (n.status === "confirmada" ? n.pontos : 0), 0);
 
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ["admin-notas"] });
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["admin-notas"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-notas-valor-campanha"] });
+  };
 
   async function setStatus(n: Nota, status: "confirmada" | "reprovada") {
     let motivo: string | null = null;
@@ -98,8 +112,8 @@ function AdminNotas() {
           <div className="text-2xl font-bold mt-2">{list.length}</div>
         </CardContent></Card>
         <Card><CardContent className="p-5">
-          <div className="text-xs text-muted-foreground">Valor confirmado</div>
-          <div className="text-2xl font-bold mt-2">{brl(totalValue)}</div>
+          <div className="text-xs text-muted-foreground">Valor em campanha (confirmado)</div>
+          <div className="text-2xl font-bold mt-2">{brl(valorCampanha)}</div>
         </CardContent></Card>
         <Card><CardContent className="p-5">
           <div className="text-xs text-muted-foreground">Pontos confirmados</div>

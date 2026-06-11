@@ -26,6 +26,8 @@ type Overview = {
   pontosNoMes: number;
   valorNotasNoMes: number;
   resgatesSolicitados: number;
+  notasAprovadas: number;
+  notasRecusadas: number;
 };
 
 type UltimaNota = {
@@ -43,7 +45,7 @@ async function fetchOverview(): Promise<Overview> {
   const inicioMesISO = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
   const inicioMesData = inicioMesISO.slice(0, 10);
 
-  const [eletricistas, campanhas, notasAnalise, transacoes, notasMes, resgates] = await Promise.all([
+  const [eletricistas, campanhas, notasAnalise, transacoes, notasMes, resgates, aprovadas, recusadas] = await Promise.all([
     supabase.from("eletricistas").select("id", { count: "exact", head: true }).eq("status", "ativo"),
     supabase.from("campanhas").select("id", { count: "exact", head: true }).eq("status", "ativa"),
     supabase.from("notas").select("id", { count: "exact", head: true }).eq("status", "em_analise"),
@@ -53,11 +55,18 @@ async function fetchOverview(): Promise<Overview> {
       .eq("tipo", "ganho")
       .eq("status", "confirmado")
       .gte("created_at", inicioMesISO),
-    supabase.from("notas").select("valor").gte("data_compra", inicioMesData),
+    supabase
+      .from("nota_itens")
+      .select("valor, nota:notas!inner(status, data_compra)")
+      .eq("elegivel", true)
+      .eq("nota.status", "confirmada")
+      .gte("nota.data_compra", inicioMesData),
     supabase.from("resgates").select("id", { count: "exact", head: true }).eq("status", "solicitado"),
+    supabase.from("notas").select("id", { count: "exact", head: true }).eq("status", "confirmada"),
+    supabase.from("notas").select("id", { count: "exact", head: true }).eq("status", "reprovada"),
   ]);
 
-  for (const r of [eletricistas, campanhas, notasAnalise, transacoes, notasMes, resgates]) {
+  for (const r of [eletricistas, campanhas, notasAnalise, transacoes, notasMes, resgates, aprovadas, recusadas]) {
     if (r.error) throw r.error;
   }
 
@@ -68,6 +77,8 @@ async function fetchOverview(): Promise<Overview> {
     pontosNoMes: (transacoes.data ?? []).reduce((s, t) => s + (t.pontos ?? 0), 0),
     valorNotasNoMes: (notasMes.data ?? []).reduce((s, n) => s + Number(n.valor ?? 0), 0),
     resgatesSolicitados: resgates.count ?? 0,
+    notasAprovadas: aprovadas.count ?? 0,
+    notasRecusadas: recusadas.count ?? 0,
   };
 }
 
@@ -98,7 +109,9 @@ function AdminOverview() {
         <Kpi label="Campanhas ativas" value={fmt(ov?.campanhasAtivas)} icon={<Megaphone className="h-4 w-4" />} />
         <Kpi label="Notas em análise" value={fmt(ov?.notasEmAnalise)} icon={<FileClock className="h-4 w-4" />} />
         <Kpi label="Pontos no mês" value={fmt(ov?.pontosNoMes)} icon={<Zap className="h-4 w-4" />} />
-        <Kpi label="Notas no mês" value={fmt(ov?.valorNotasNoMes, brl)} icon={<Receipt className="h-4 w-4" />} />
+        <Kpi label="Valor em campanha no mês" value={fmt(ov?.valorNotasNoMes, brl)} icon={<Receipt className="h-4 w-4" />} />
+        <Kpi label="Notas aprovadas" value={fmt(ov?.notasAprovadas)} icon={<Receipt className="h-4 w-4" />} />
+        <Kpi label="Notas recusadas" value={fmt(ov?.notasRecusadas)} icon={<Receipt className="h-4 w-4" />} />
         <Kpi label="Resgates solicitados" value={fmt(ov?.resgatesSolicitados)} icon={<Clock className="h-4 w-4" />} />
       </div>
 

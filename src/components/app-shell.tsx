@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean; staffOnly?: boolean };
 const nav: NavItem[] = [
+  { to: "/admin", label: "Administração", icon: ShieldCheck, staffOnly: true },
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/campanhas", label: "Campanhas", icon: Megaphone },
   { to: "/ranking", label: "Ranking", icon: Trophy },
@@ -28,7 +29,6 @@ const nav: NavItem[] = [
   { to: "/loja", label: "Loja de Prêmios", icon: Gift },
   { to: "/indicacoes", label: "Indicações", icon: UserPlus, staffOnly: true },
   { to: "/perfil", label: "Meu Perfil", icon: User },
-  { to: "/admin", label: "Administração", icon: ShieldCheck, staffOnly: true },
 ];
 
 function Brand() {

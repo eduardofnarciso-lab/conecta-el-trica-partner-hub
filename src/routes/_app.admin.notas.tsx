@@ -64,7 +64,7 @@ function AdminNotas() {
   const list = notas.filter((n) =>
     (n.eletricista?.nome ?? "").toLowerCase().includes(q.toLowerCase()),
   );
-  const totalValue = list.reduce((s, n) => s + Number(n.valor), 0);
+  const totalValue = list.reduce((s, n) => s + (n.status === "confirmada" ? Number(n.valor) : 0), 0);
   const totalPoints = list.reduce((s, n) => s + (n.status === "confirmada" ? n.pontos : 0), 0);
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["admin-notas"] });
@@ -98,7 +98,7 @@ function AdminNotas() {
           <div className="text-2xl font-bold mt-2">{list.length}</div>
         </CardContent></Card>
         <Card><CardContent className="p-5">
-          <div className="text-xs text-muted-foreground">Valor total</div>
+          <div className="text-xs text-muted-foreground">Valor confirmado</div>
           <div className="text-2xl font-bold mt-2">{brl(totalValue)}</div>
         </CardContent></Card>
         <Card><CardContent className="p-5">

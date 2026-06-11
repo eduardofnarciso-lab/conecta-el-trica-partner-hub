@@ -15,7 +15,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/badges";
-import { supabase } from "@/lib/supabase";
+import { supabase, supabaseSignup } from "@/lib/supabase";
 import { Eye, Pencil, Ban, Search, Unlock, Plus } from "lucide-react";
 import { toast } from "sonner";
 
@@ -61,7 +61,7 @@ function AdminPartners() {
   const [viewing, setViewing] = useState<Eletricista | null>(null);
   const [editing, setEditing] = useState<Eletricista | null>(null);
   const [novoOpen, setNovoOpen] = useState(false);
-  const [form, setForm] = useState({ nome: "", telefone: "", cidade: "", status: "ativo" });
+  const [form, setForm] = useState({ nome: "", telefone: "", cidade: "", status: "ativo", email: "", senha: "" });
   const [saving, setSaving] = useState(false);
 
   const list = parceiros.filter((p) => p.nome.toLowerCase().includes(q.toLowerCase()));
@@ -131,21 +131,48 @@ function AdminPartners() {
       toast.error("Informe o nome do parceiro.");
       return;
     }
-    setSaving(true);
-    const { error } = await supabase.from("eletricistas").insert({
-      nome: form.nome.trim(),
-      telefone: form.telefone.trim() || null,
-      cidade: form.cidade.trim() || null,
-      status: "ativo",
-    });
-    setSaving(false);
-    if (error) {
-      toast.error("Não foi possível cadastrar: " + error.message);
+    const email = form.email.trim().toLowerCase();
+    const senha = form.senha;
+    if (email && senha.length < 6) {
+      toast.error("A senha precisa ter pelo menos 6 caracteres.");
       return;
     }
-    setNovoOpen(false);
-    toast.success(`Parceiro ${form.nome.trim()} cadastrado.`);
-    refresh();
+    setSaving(true);
+    try {
+      let profileId: string | null = null;
+
+      if (email) {
+        const { data, error: signErr } = await supabaseSignup.auth.signUp({
+          email,
+          password: senha,
+          options: { data: { nome: form.nome.trim() } },
+        });
+        if (signErr) throw new Error("Login: " + signErr.message);
+        profileId = data.user?.id ?? null;
+      }
+
+      const { error } = await supabase.from("eletricistas").insert({
+        nome: form.nome.trim(),
+        telefone: form.telefone.trim() || null,
+        cidade: form.cidade.trim() || null,
+        email: email || null,
+        profile_id: profileId,
+        status: "ativo",
+      });
+      if (error) throw new Error(error.message);
+
+      setNovoOpen(false);
+      toast.success(
+        email
+          ? `Parceiro ${form.nome.trim()} cadastrado com acesso — login: ${email}`
+          : `Parceiro ${form.nome.trim()} cadastrado.`,
+      );
+      refresh();
+    } catch (err) {
+      toast.error("Não foi possível cadastrar: " + (err instanceof Error ? err.message : ""));
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -161,7 +188,7 @@ function AdminPartners() {
             open={novoOpen}
             onOpenChange={(o) => {
               setNovoOpen(o);
-              if (o) setForm({ nome: "", telefone: "", cidade: "", status: "ativo" });
+              if (o) setForm({ nome: "", telefone: "", cidade: "", status: "ativo", email: "", senha: "" });
             }}
           >
             <DialogTrigger asChild>
@@ -184,6 +211,19 @@ function AdminPartners() {
                 <div className="space-y-1.5">
                   <Label htmlFor="novo-cidade">Cidade</Label>
                   <Input id="novo-cidade" value={form.cidade} onChange={(e) => setForm((f) => ({ ...f, cidade: e.target.value }))} placeholder="Tatuí" />
+                </div>
+                <div className="border-t border-border pt-4 space-y-4">
+                  <p className="text-xs text-muted-foreground">
+                    Acesso ao sistema (opcional) — preencha para o eletricista entrar com e-mail e senha.
+                  </p>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="novo-email">E-mail de acesso</Label>
+                    <Input id="novo-email" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} placeholder="eletricista@gmail.com" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="novo-senha">Senha</Label>
+                    <Input id="novo-senha" type="text" value={form.senha} onChange={(e) => setForm((f) => ({ ...f, senha: e.target.value }))} placeholder="Mínimo 6 caracteres" />
+                  </div>
                 </div>
               </div>
               <DialogFooter>

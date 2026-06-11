@@ -16,3 +16,14 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
   },
 });
+
+// Cliente auxiliar só para criar logins de eletricistas a partir do painel
+// admin, sem trocar a sessão de quem está logado.
+export const supabaseSignup = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
+    storageKey: "ep-signup",
+  },
+});

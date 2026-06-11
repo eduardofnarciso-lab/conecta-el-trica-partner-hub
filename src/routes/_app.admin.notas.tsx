@@ -223,20 +223,30 @@ function LancarNotaDialog({ onDone }: { onDone: () => void }) {
     setNfe(parsed);
     try {
       const dataCompra = parsed.dataEmissao || new Date().toISOString().slice(0, 10);
-      const { data: campanhas, error } = await supabase
+      const { data: ativas, error } = await supabase
         .from("campanhas")
         .select("id, nome, destaque, data_inicio, data_fim")
         .eq("status", "ativa")
-        .or(`data_inicio.is.null,data_inicio.lte.${dataCompra}`)
-        .or(`data_fim.is.null,data_fim.gte.${dataCompra}`)
         .order("destaque", { ascending: false });
       if (error) throw error;
 
-      const camp = (campanhas ?? [])[0] as Campanha | undefined;
+      const noPeriodo = (ativas ?? []).filter(
+        (c) =>
+          (!c.data_inicio || c.data_inicio <= dataCompra) &&
+          (!c.data_fim || c.data_fim >= dataCompra),
+      );
+      const camp = noPeriodo[0] as Campanha | undefined;
       if (!camp) {
         setCampanha(null);
         setItens(parsed.itens.map((i) => ({ ...i, categoria: null, pontos: 0 })));
-        toast.warning("Nenhuma campanha ativa na data da compra — a nota não vai pontuar.");
+        if ((ativas ?? []).length === 0) {
+          toast.warning("Nenhuma campanha com status Ativa — a nota não vai pontuar.");
+        } else {
+          const c = ativas![0];
+          toast.warning(
+            `A campanha "${c.nome}" está ativa, mas o período (${c.data_inicio ?? "…"} a ${c.data_fim ?? "…"}) não cobre a data da compra (${dataCompra}). Ajuste o período ou a data.`,
+          );
+        }
         return;
       }
       setCampanha(camp);
